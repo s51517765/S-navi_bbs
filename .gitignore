@@ -1,0 +1,34 @@
+# --- Python / Django ---
+*.py[cod]
+__pycache__/
+*.so
+.python-version
+
+# --- データベース (重要: 自分のデータが他人に上書きされないように) ---
+db.sqlite3
+db.sqlite3-journal
+
+# --- 仮想環境 ---
+venv/
+.venv/
+env/
+bin/
+lib64/
+lib/
+include/
+share/
+
+# --- メディア・静的ファイル ---
+# ユーザーがアップロードした画像などは含めないのが一般的
+/media/
+/static/  # 開発用。デプロイ時は collectstatic で生成するため。
+
+# --- OS・エディタ関連 ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# --- 環境変数 (SECRET_KEYなどを分ける場合) ---
+.env

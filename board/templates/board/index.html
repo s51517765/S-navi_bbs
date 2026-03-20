@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+{% load hash_filters %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+            <div>
+                <h2 class="fw-bold mb-0">訪問備忘録</h2>
+            </div>
+            <div class="text-end">
+                <span class="text-muted small">現在の所持ポイント</span>
+                <div
+                    class="fs-4 fw-bold {% if user_points <= 5 %}text-danger animate-pulse{% else %}text-primary{% endif %}">
+                    <i class="bi bi-coin text-warning"></i> {{ user_points }} <small class="text-muted">pt</small>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        {% if user_points <= 0 %} <div class="card border-danger shadow-lg my-5">
+            <div class="card-body text-center p-5">
+                <div class="display-1 text-danger mb-4">
+                    <i class="bi bi-lock-fill"></i>
+                </div>
+                <h3 class="fw-bold text-dark">閲覧制限がかかっています</h3>
+                <p class="text-muted mb-4">
+                    ポイントが 0 になりました。他の人の投稿を見るには、<br>
+                    新しくお店の情報を投稿して <strong>+30ポイント</strong> 獲得してください。
+                </p>
+                <a href="{% url 'post_create' %}" class="btn btn-danger btn-lg px-5 shadow-sm">
+                    <i class="bi bi-pencil-square"></i> 今すぐ新規投稿して解除
+                </a>
+            </div>
+    </div>
+
+    {% else %}
+
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{% url 'post_create' %}" class="btn btn-primary shadow-sm">
+            <i class="bi bi-pencil-square"></i> 新しく投稿する (+30pt)
+        </a>
+    </div>
+
+    {% for post in posts %}
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <span class="badge bg-secondary mb-2">{{ post.visit_date|date:"Y/m" }} 訪問</span>
+                    <h4 class="card-title text-primary fw-bold mb-0">
+                        {% if post.shop_url %}
+                        <a href="{{ post.shop_url }}" target="_blank">{{ post.shop_name }}</a>
+                        {% else %}
+                        {{ post.shop_name }}
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="text-warning fs-5">
+                    {% if post.stars == 5 %}★★★★★{% elif post.stars == 4 %}★★★★☆{% elif post.stars == 3 %}★★★☆☆{% elif
+                    post.stars == 2 %}★★☆☆☆{% elif post.stars == 1 %}★☆☆☆☆{% else %}☆☆☆☆☆{% endif %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <span class="text-dark fw-bold me-2">キャスト：</span>
+                <span class="badge bg-light text-dark border p-2">
+                    {% if post.cast_url %}
+                    <a href="{{ post.cast_url }}" target="_blank">{{ post.cast_name|default:"（未記入）" }}</a>
+                    {% else %}
+                    {{ post.cast_name|default:"（未記入）" }}
+                    {% endif %}
+                </span>
+
+                {% if post.want_repeat %}
+                <span class="badge bg-danger ms-2 shadow-sm">
+                    <i class="bi bi-fire"></i> リピ確定！
+                </span>
+                {% endif %}
+            </div>
+
+            {% if post.content %}
+            <div class="card-text text-secondary bg-light p-3 rounded mb-3"
+                style="white-space: pre-wrap; border-left: 4px solid #dee2e6;">{{ post.content }}</div>
+            {% endif %}
+
+            <div class="mt-3 d-flex gap-2 align-items-center">
+                <form action="{% url 'evaluate_post' post.id 'good' %}" method="POST" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="btn btn-sm {% if post.my_eval == 'good' %}btn-success text-white{% else %}btn-outline-success{% endif %}">
+                        <i class="bi bi-hand-thumbs-up{% if post.my_eval == 'good' %}-fill{% endif %}"></i>
+                        Good ({{ post.good_count }})
+                    </button>
+                </form>
+
+                <form action="{% url 'evaluate_post' post.id 'bad' %}" method="POST" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="btn btn-sm {% if post.my_eval == 'bad' %}btn-secondary text-white{% else %}btn-outline-secondary{% endif %}">
+                        <i class="bi bi-hand-thumbs-down{% if post.my_eval == 'bad' %}-fill{% endif %}"></i>
+                        Bad ({{ post.bad_count }})
+                    </button>
+                </form>
+
+                <div class="ms-auto"> <span
+                        class="badge rounded-pill {% if post.get_score > 0 %}bg-success{% elif post.get_score < 0 %}bg-danger{% else %}bg-light text-dark border{% endif %} px-3 py-2 shadow-sm">
+                        合計: {{ post.get_score }} pt
+                    </span>
+                </div>
+            </div>
+
+            <hr class="text-muted opacity-25">
+
+            <div class="d-flex justify-content-between align-items-center text-muted small">
+                <div>
+                    <strong class="text-dark">{{ post.author.first_name|default:"名無しのユーザー" }}</strong>
+                    <span class="mx-1">ID: {{ post.author.username|hash_id }}</span>
+                </div>
+                <div>
+                    {{ post.created_at|date:"Y/m/d H:i" }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-5 text-muted">まだ投稿がありません。</div>
+    {% endfor %}
+    {% endif %}
+</div>
+</div>
+
+<style>
+    @keyframes pulse {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .animate-pulse {
+        animation: pulse 1s infinite;
+    }
+</style>
+{% endblock %}

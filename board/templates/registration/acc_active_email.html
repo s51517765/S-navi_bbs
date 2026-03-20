@@ -1,0 +1,4 @@
+{{ user.username }} 様
+
+以下のリンクをクリックして、アカウントを有効化してください。
+http://{{ domain }}{% url 'activate' uidb64=uid token=token %}

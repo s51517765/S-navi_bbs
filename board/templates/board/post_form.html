@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h2 class="fw-bold mb-4 text-center">新規投稿 / 編集</h2>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">{{ field.label }}</label>
+
+                        {% if field.name == "visit_date" %}
+                        {# 訪問日だけは「年月」専用の入力タイプ(month)にする #}
+                        <input type="month" name="{{ field.html_name }}" class="form-control"
+                            value="{{ field.value|date:'Y-m'|default:'' }}">
+                        {% elif field.name == "want_repeat" %}
+                        {# リピート希望はチェックボックスとして綺麗に表示 #}
+                        <div class="form-check form-switch">
+                            {{ field }}
+                            <label class="form-check-label text-muted small">リピートしたい場合はON</label>
+                        </div>
+                        {% elif field.name == "stars" %}
+                        {# 星評価は数字入力 #}
+                        {{ field }}
+                        <div class="form-text small">0（最低）〜 5（最高）で入力してください</div>
+                        {% else %}
+                        {# その他の項目（店名、URL、感想など） #}
+                        {{ field }}
+                        {% endif %}
+
+                        {% if field.errors %}
+                        <div class="text-danger small mt-1">{{ field.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary py-2 fw-bold shadow-sm">
+                            <i class="bi bi-check-circle"></i> 投稿を保存する
+                        </button>
+                        <a href="{% url 'index' %}" class="btn btn-outline-secondary">
+                            キャンセルして戻る
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* フォーム全体の入力欄をBootstrap風に整える */
+    input[type="text"],
+    input[type="url"],
+    input[type="number"],
+    input[type="month"],
+    textarea,
+    select {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        transition: border-color 0.15s;
+    }
+
+    input:focus,
+    textarea:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* チェックボックスだけは特別扱い */
+    input[type="checkbox"] {
+        width: 2.5em;
+        height: 1.25em;
+        margin-right: 0.5rem;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
