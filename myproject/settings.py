@@ -14,6 +14,9 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+DEFAULT_CHARSET = "utf-8"
+EMAIL_ALLOW_UNICODE = True
+
 # .env ファイルを読み込む
 load_dotenv()
 
@@ -26,28 +29,24 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # ついでに DEBUG も切り出すと安全です
 DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = []
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-o0r!oixi+6ad#i&muo-l_!2odosz=i_epegip6oa3d9u2+4__j"
 
-
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 # Application definition
 
 INSTALLED_APPS = [
+    "board",  # 自分のアプリが最優先
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "board",
 ]
 
 MIDDLEWARE = [
@@ -65,7 +64,7 @@ ROOT_URLCONF = "myproject.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -114,6 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = "ja"
+# LANGUAGE_CODE = "en-us"  # For debug (パスワードリセットメールのbase64対応)
 
 TIME_ZONE = "Asia/Tokyo"
 
@@ -127,11 +127,22 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# ログインが必要な時に飛ばす先のURL名（name="login" に対応）
+LOGIN_URL = "login"
 # ログイン成功時のリダイレクト先（掲示板トップ）
 LOGIN_REDIRECT_URL = "index"
 
 # ログアウト後のリダイレクト先（掲示板トップ）
-LOGOUT_REDIRECT_URL = "index"
+LOGOUT_REDIRECT_URL = "login"
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # ターミナルに表示
+# Mailを使ったパスワードリセット
 # 本番（Gmailなど）を使う場合はここを SMTP 設定に書き換えます
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # ターミナルに表示
+
+# --- 本番（OCI運用時）に設定すべき内容（例：GmailやSendGridなど） ---
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your-app-password'

@@ -5,11 +5,14 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     points = models.IntegerField(default=10)  # 初期ポイント
+    last_point_update = models.DateField(default=timezone.now)  # 追加：最後に減点した日
+    nickname = models.CharField(max_length=20, blank=True, verbose_name="ニックネーム")
 
     def __str__(self):
         return f"{self.user.username} - {self.points}pt"

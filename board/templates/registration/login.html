@@ -11,9 +11,16 @@
                     {{ form.as_p }}
                     <button type="submit" class="btn btn-primary w-100">ログイン</button>
                 </form>
+                <hr>
                 <div class="text-center mt-3">
                     <a href="{% url 'signup' %}">新規会員登録はこちら</a>
                 </div>
+
+                <p>
+                <div class="text-center mt-3">
+                    <a href="{% url 'password_reset' %}">パスワードを忘れた方はこちら</a>
+                </div>
+                </p>
             </div>
         </div>
     </div>

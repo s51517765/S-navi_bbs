@@ -2,7 +2,7 @@
 from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import CustomUserCreationForm  # 新しく作ったフォームを読み込む
+from .forms import CustomUserCreationForm
 from .models import Post, Profile, Evaluation
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
@@ -19,6 +19,11 @@ from django.views.generic import UpdateView, DeleteView
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db import transaction
 from django.views.decorators.http import require_POST
+from django.contrib.auth.signals import user_logged_in
+from django.dispatch import receiver
+from django.utils import timezone
+from .forms import ProfileForm
+from django.contrib.auth.decorators import login_required
 
 
 # 一覧表示（ログイン必須に変更）
@@ -27,21 +32,19 @@ class PostListView(LoginRequiredMixin, ListView):
     template_name = "board/index.html"
     context_object_name = "posts"
 
-    def get_queryset(self):
-        # ポイントが0以下の場合は空のリストを返す（または特定のメッセージ用フラグを立てる）
-        if self.request.user.profile.points <= 0:
-            return Post.objects.none()
-        return Post.objects.all().order_by("-created_at")
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["user_points"] = self.request.user.profile.points
         return context
 
     def get_queryset(self):
+        # ポイントチェック
+        if self.request.user.profile.points <= 0:
+            return Post.objects.none()
+
+        # ポイントがある場合は全件取得し、評価を付与
         queryset = Post.objects.all().order_by("-created_at")
         for post in queryset:
-            # ログインユーザーの評価を一時的な属性として持たせる
             user_eval = post.evaluations.filter(user=self.request.user).first()
             post.my_eval = user_eval.value if user_eval else None
         return queryset
@@ -140,6 +143,8 @@ class SignUpView(CreateView):
             self.request, "ユーザー登録が完了しました。メールを確認してください。"
         )
         return redirect(self.success_url)
+
+        # ここから追加：first_name のバリデーション
 
 
 def activate(request, uidb64, token):
@@ -269,3 +274,50 @@ def evaluate_post(request, post_id, eval_type):
 
     messages.success(request, f"評価を反映しました。")
     return redirect("index")
+
+
+@receiver(user_logged_in)
+def reduce_points_on_login(sender, request, user, **kwargs):
+    print(f"\n=== DEBUG START for {user.username} ===")
+    profile, created = Profile.objects.get_or_create(user=user)
+
+    # DBから取り出した直後の値を確認
+    raw_last_update = profile.last_point_update
+    print(f"1. DB内の最終更新日: {raw_last_update} (型: {type(raw_last_update)})")
+
+    today = timezone.now().date()
+    print(f"2. 計算に使用する今日の日付: {today}")
+
+    # 計算式の内訳を確認
+    diff = today - raw_last_update
+    days_passed = diff.days
+    print(f"3. 差分計算結果: {diff} -> days属性: {days_passed}")
+
+    if days_passed >= 1:
+        reduction = days_passed
+        old_points = profile.points
+        profile.points = max(0, profile.points - reduction)
+        profile.last_point_update = today
+        profile.save()
+        print(f"4. 【更新実行】 {old_points} -> {profile.points} (減少量: {reduction})")
+    else:
+        print("4. 【更新スキップ】 1日以上経過していません")
+
+    print("=== DEBUG END ===\n")
+
+
+@login_required
+def profile_edit(request):
+    # プロフィールモデルではなく、ログインユーザー自身を編集対象にする
+    user = request.user
+
+    if request.method == "POST":
+        # instance=user とすることで、今のユーザー情報を上書き保存します
+        form = ProfileForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect("index")
+    else:
+        form = ProfileForm(instance=user)
+
+    return render(request, "board/profile_edit.html", {"form": form})

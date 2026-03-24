@@ -1,6 +1,6 @@
 # board/admin.py
 from django.contrib import admin
-from .models import Post
+from .models import Post, Profile
 
 
 # admin管理画面
@@ -14,3 +14,6 @@ class PostAdmin(admin.ModelAdmin):
 
     # 右側のフィルター機能
     list_filter = ("stars", "want_repeat", "created_at")
+
+
+admin.site.register(Profile)

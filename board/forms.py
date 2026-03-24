@@ -2,6 +2,17 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from .models import Profile
+from django.core.exceptions import ValidationError
+
+
+def validate_nickname(value, is_staff):
+    if not is_staff:
+        tmp = value.lower()
+        if "管理" in value or "admin" in tmp:
+            raise ValidationError("「管理」や「admin」などは管理者専用です")
+        if "@" in value:
+            raise ValidationError("禁止されている文字が含まれています")
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -9,7 +20,7 @@ class CustomUserCreationForm(UserCreationForm):
     nickname = forms.CharField(
         label="表示名（ニックネーム）",
         max_length=30,
-        help_text="サイト内で表示される名前です。後から変更可能です。",
+        help_text="サイト内で表示される名前です。",
         required=True,
     )
     # メールアドレスを明示的に定義し、required=True にする
@@ -31,6 +42,26 @@ class CustomUserCreationForm(UserCreationForm):
             "username": "ユーザIDは半角英数字と記号（@/./+/-/_）が使用可能です。",
         }
 
+    # メールアドレスの重複チェック
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+
+        # データベース内に同じメールアドレスを持つユーザーがいるか確認
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("このメールアドレスは既に登録されています。")
+
+        return email
+
+    def clean_nickname(self):
+        # self.cleaned_data["nickname"] をチェックする
+        nickname = self.cleaned_data.get("nickname")
+
+        # 共通バリデーション関数を呼び出す
+        # 新規登録時は self.instance.is_staff は常に False なのでそのまま渡してOK
+        validate_nickname(nickname, self.instance.is_staff)
+
+        return nickname
+
     def save(self, commit=True):
         user = super().save(commit=False)
         # 入力された nickname を first_name フィールドに保存
@@ -38,3 +69,24 @@ class CustomUserCreationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["first_name"]  # ニックネームとして使っている項目
+        widgets = {
+            "first_name": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "ニックネームを入力"}
+            ),
+        }
+        labels = {
+            "first_name": "ニックネーム",
+        }
+
+    # ここから追加：first_name のバリデーション
+    def clean_first_name(self):
+        first_name = self.cleaned_data.get("first_name")
+        # 共通関数を呼び出す（修正漏れを防げる！）
+        validate_nickname(first_name, self.instance.is_staff)
+        return first_name

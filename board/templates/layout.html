@@ -22,8 +22,14 @@
         <div class="container">
             <a class="navbar-brand" href="{% url 'index' %}">🚀 Django BBS</a>
             <div class="navbar-nav ms-auto">
-                {% if user.is_authenticated %}
-                <span class="nav-link text-light">こんにちは、{{ user.username }}さん</span>
+                <div class="d-flex align-items-center text-light me-3">
+                    {% if user.is_authenticated %}
+                    <!--first_name領域にnicknameを保存している-->
+                    <span class="nav-link text-light">こんにちは、</span>
+                    <a href="{% url 'profile_edit' %}" class="text-info font-weight-bold">
+                        {% if user.first_name %}{{ user.first_name }}{% else %}{{ "firstname" }}{% endif %}
+                    </a> さん
+                </div>
                 <a class="nav-item nav-link" href="{% url 'post_create' %}">新規投稿</a>
                 <form action="{% url 'logout' %}" method="post" style="display: inline;">
                     {% csrf_token %}
