@@ -23,7 +23,8 @@ http://127.0.0.1:8000/signup/
 
 ## 技術スタック
 
-Python3.13.2 / Django 6.0.3 / Bootstrup
+Python3.12.12(3.13.2) / Django 6.0.3 / gunicorn / Bootstrup / nginx<br>
+(3.13.2は検証環境の一部として使用)
 
 ## Library
 pip install python-dotenv

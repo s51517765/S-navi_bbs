@@ -59,6 +59,8 @@ class Post(models.Model):
     def __str__(self):
         return f"{self.shop_name} - {self.cast_name}"
 
+
+"""
     def get_score(self):
         # この投稿に紐付く評価をすべて取得
         evals = self.evaluations.all()
@@ -77,6 +79,7 @@ class Post(models.Model):
         goods = self.evaluations.filter(value="good").count()
         bads = self.evaluations.filter(value="bad").count()
         return (goods * 3) - (bads * 1)
+"""
 
 
 # 同じユーザーが同じ投稿に1回しか評価できない設定
@@ -111,3 +114,29 @@ class Comment(models.Model):
     def get_good_count(self):
         # もし good_count という整数フィールドがないなら、これで計算
         return self.reactions.filter(value="good").count()
+
+
+class CommentReaction(models.Model):
+    REACTION_CHOICES = [("good", "Good"), ("bad", "Bad")]
+
+    comment = models.ForeignKey(
+        Comment, on_delete=models.CASCADE, related_name="reactions"
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    reaction_type = models.CharField(max_length=10, choices=REACTION_CHOICES)
+
+    class Meta:
+        # 同じユーザーが同じコメントに2回以上反応できないようにする制約
+        unique_together = ("comment", "user")
+
+
+# すでにあるクラスの下に追加
+class PostReaction(models.Model):
+    REACTION_CHOICES = [("good", "Good"), ("bad", "Bad")]
+
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="reactions")
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    reaction_type = models.CharField(max_length=10, choices=REACTION_CHOICES)
+
+    class Meta:
+        unique_together = ("post", "user")  # 1人1投稿につき1反応まで

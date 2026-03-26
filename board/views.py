@@ -3,7 +3,7 @@ from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import CustomUserCreationForm, ProfileForm, CommentForm
-from .models import Post, Profile, Evaluation, Comment
+from .models import Post, Profile, Evaluation, Comment, CommentReaction, PostReaction
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -23,6 +23,7 @@ from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 
 
 # 一覧表示（ログイン必須に変更）
@@ -49,7 +50,6 @@ class PostListView(LoginRequiredMixin, ListView):
         queryset = list(
             Post.objects.all().prefetch_related("comments").order_by("-created_at")
         )
-        # queryset = (            Post.objects.all().prefetch_related("comments").order_by("-created_at")        )
 
         for post in queryset:
             # 評価情報を直接付与
@@ -183,7 +183,6 @@ def activate(request, uidb64, token):
         )
         return redirect("login")
     else:
-        # ここで失敗している
         return render(request, "registration/activation_invalid.html")
 
 
@@ -244,55 +243,49 @@ def give_good(request, post_id):
     return redirect("index")
 
 
-@require_POST  # POST以外のアクセス（直接URLを叩くなど）を禁止する
+# （投稿）POST以外のアクセス（直接URLを叩くなど）を禁止する
 def evaluate_post(request, post_id, eval_type):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "ログインが必要です"}, status=403)
+
     post = get_object_or_404(Post, id=post_id)
-    author_profile = post.author.profile
-    user = request.user
+    if post.author == request.user:
+        return JsonResponse(
+            {
+                "error": "自分の投稿にはリアクションできません",
+                "status": "mine",  # JavaScript側で判定するためにステータスを送る
+            },
+            status=403,
+        )
+    post = get_object_or_404(Post, id=post_id)
+    reaction = PostReaction.objects.filter(post=post, user=request.user).first()
 
-    # 自分の投稿には評価できないようにする場合
-    if post.author == user:
-        messages.warning(request, "自分の投稿は評価できません。")
-        return redirect("index")
-
-    with transaction.atomic():
-        # 既存の評価があるか確認
-        existing_eval = Evaluation.objects.filter(user=user, post=post).first()
-        if existing_eval:
-            # --- 【追加】同じボタンをもう一度押した場合（キャンセル） ---
-            if existing_eval.value == eval_type:
-                if eval_type == "good":
-                    author_profile.points -= 3
-                else:
-                    author_profile.points += 1
-
-                existing_eval.delete()  # 評価レコードを削除
-                author_profile.save()
-                messages.info(request, "評価を取り消しました。")
-                return redirect("index")
-
-            # --- 評価の書き換え（Good ↔ Bad） ---
-            if existing_eval.value == "good":
-                author_profile.points -= 3  # 前のGood分を引く
-            else:
-                author_profile.points += 1  # 前のBad分を戻す
-
-            existing_eval.value = eval_type
-            existing_eval.save()
+    if reaction:
+        if reaction.reaction_type == eval_type:
+            reaction.delete()
+            status = "removed"
         else:
-            # --- 新規評価 ---
-            Evaluation.objects.create(user=user, post=post, value=eval_type)
+            reaction.reaction_type = eval_type
+            reaction.save()
+            status = "switched"
+    else:
+        PostReaction.objects.create(
+            post=post, user=request.user, reaction_type=eval_type
+        )
+        status = "added"
 
-        # 今回の評価分を反映
-        if eval_type == "good":
-            author_profile.points += 3
-        else:
-            author_profile.points -= 1
+    # ★ ここで「モデルのメソッド」を呼び出して最新の数を取得する
+    # もしメソッド名が good_count なら () をつけて呼び出す
+    good_count = post.reactions.filter(reaction_type="good").count()
+    bad_count = post.reactions.filter(reaction_type="bad").count()
 
-        author_profile.save()
-
-    messages.success(request, f"評価を反映しました。")
-    return redirect("index")
+    return JsonResponse(
+        {
+            "good_count": good_count,
+            "bad_count": bad_count,
+            "status": status,
+        }
+    )
 
 
 @receiver(user_logged_in)
@@ -342,46 +335,95 @@ def profile_edit(request):
     return render(request, "board/profile_edit.html", {"form": form})
 
 
-# コメント投稿（Post詳細ビューなどに組み込む）
+# コメントをする
 @login_required
 def add_comment(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    if request.method == "POST":
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.post = post
-            comment.author = request.user
-            comment.save()
-            # ポイント付与
-            profile, _ = Profile.objects.get_or_create(user=request.user)
-            profile.points += 5
-            profile.save()
+    if request.method == "POST" and request.user.is_authenticated:
+        # 1. まず、対象となる Post をデータベースから取得する（これが抜けていたはずです）
+        post = get_object_or_404(Post, id=post_id)
 
-    # 詳細画面(post_detail)ではなく、一覧画面(index)へ戻す
-    return redirect("index")
+        content = request.POST.get("content")
+        if content:
+            # 2. 取得した post 変数を使ってコメントを作成
+            comment = Comment.objects.create(
+                post=post, author=request.user, content=content
+            )
+
+            # JavaScriptに返すデータ
+            return JsonResponse(
+                {
+                    "status": "ok",
+                    "comment_id": comment.id,
+                    "author_display_name": request.user.first_name,  # プロフィール名なら request.user.profile.nickname など
+                    "content": comment.content,
+                    "created_at": "たった今",
+                }
+            )
+
+    return JsonResponse({"status": "error"}, status=400)
 
 
-# リアクション処理
+# コメントに対するリアクション処理（元の投稿とコメントは区別）
 @login_required
 def comment_reaction(request, comment_id, reaction_type):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "ログインが必要です"}, status=403)
+
     comment = get_object_or_404(Comment, id=comment_id)
-    # 自分のコメントにはリアクションできないようにする（推奨）
+
+    # 自分のコメントにはリアクションできないようにする
     if comment.author == request.user:
         return redirect("post_detail", pk=comment.post.id)
 
-    profile, _ = Profile.objects.get_or_create(user=comment.author)
+    # ユーザーがこのコメントに対して持っている既存のリアクションを探す
+    reaction = CommentReaction.objects.filter(
+        comment=comment, user=request.user
+    ).first()
 
-    if reaction_type == "good":
-        comment.good_count += 1
-        profile.points += 2  # Goodをもらったら2ポイント
-    elif reaction_type == "bad":
-        comment.bad_count += 1
-        profile.points -= 1  # Badをもらったら-1ポイント（任意）
+    if reaction:
+        if reaction.reaction_type == reaction_type:
+            # 【解除】同じボタンをもう一度押した場合：削除してカウントを減らす
+            reaction.delete()
+            if reaction_type == "good":
+                comment.good_count = max(0, comment.good_count - 1)
+            else:
+                comment.bad_count = max(0, comment.bad_count - 1)
+            status = "removed"
+        else:
+            # 【切り替え】Good<-->Badへ変更する場合
+            # 古い方のカウントを減らす
+            if reaction.reaction_type == "good":
+                comment.good_count = max(0, comment.good_count - 1)
+                comment.bad_count += 1
+            else:
+                comment.bad_count = max(0, comment.bad_count - 1)
+                comment.good_count += 1
+
+            # 種類を書き換えて保存
+            reaction.reaction_type = reaction_type
+            reaction.save()
+            status = "switched"
+    else:
+        # 【新規】まだリアクションがない場合
+        CommentReaction.objects.create(
+            comment=comment, user=request.user, reaction_type=reaction_type
+        )
+        if reaction_type == "good":
+            comment.good_count += 1
+        else:
+            comment.bad_count += 1
+        status = "added"
 
     comment.save()
-    profile.save()
-    return redirect("post_detail", pk=comment.post.id)
+    # リダイレクトではなくJSONデータを返す
+    return JsonResponse(
+        {
+            "good_count": comment.good_count,
+            "bad_count": comment.bad_count,
+            "status": status,
+            "current_type": reaction_type if status != "removed" else None,
+        }
+    )
 
 
 def post_detail(request, pk):

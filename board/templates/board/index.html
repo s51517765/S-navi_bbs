@@ -85,20 +85,27 @@
 
                 <!-- リアクションボタン -->
                 <div class="mt-3 d-flex gap-2 align-items-center">
-                    <form action="{% url 'evaluate_post' post.id 'good' %}" method="POST" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-sm {% if post.my_eval == 'good' %}btn-success text-white{% else %}btn-outline-success{% endif %}">
-                            <i class="bi bi-hand-thumbs-up{% if post.my_eval == 'good' %}-fill{% endif %}"></i> Good ({{ post.good_count }})
-                        </button>
-                    </form>
-                    <form action="{% url 'evaluate_post' post.id 'bad' %}" method="POST" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-sm {% if post.my_eval == 'bad' %}btn-secondary text-white{% else %}btn-outline-secondary{% endif %}">
-                            <i class="bi bi-hand-thumbs-down{% if post.my_eval == 'bad' %}-fill{% endif %}"></i> Bad ({{ post.bad_count }})
-                        </button>
-                    </form>
+                    <!-- Goodボタン -->
+                    <button type="button" 
+                            id="post-good-btn-{{ post.id }}"
+                            onclick="sendPostReaction({{ post.id }}, 'good')"
+                            class="btn btn-sm {% if post.my_eval == 'good' %}btn-success text-white{% else %}btn-outline-success{% endif %}">
+                        <i id="post-good-icon-{{ post.id }}" class="bi bi-hand-thumbs-up{% if post.my_eval == 'good' %}-fill{% endif %}"></i> 
+                        Good (<span id="post-good-count-{{ post.id }}">{{ post.good_count }}</span>)
+                    </button>
+
+                    <!-- Badボタン -->
+                    <button type="button" 
+                            id="post-bad-btn-{{ post.id }}"
+                            onclick="sendPostReaction({{ post.id }}, 'bad')"
+                            class="btn btn-sm {% if post.my_eval == 'bad' %}btn-secondary text-white{% else %}btn-outline-secondary{% endif %}">
+                        <i id="post-bad-icon-{{ post.id }}" class="bi bi-hand-thumbs-down{% if post.my_eval == 'bad' %}-fill{% endif %}"></i> 
+                        Bad (<span id="post-bad-count-{{ post.id }}">{{ post.bad_count }}</span>)
+                    </button>
+
+                    <!-- スコア表示 -->
                     <div class="ms-auto">
-                        <span class="badge rounded-pill {% if post.get_score > 0 %}bg-success{% elif post.get_score < 0 %}bg-danger{% else %}bg-light text-dark border{% endif %} px-3 py-2 shadow-sm">
+                        <span id="post-score-{{ post.id }}" class="badge rounded-pill {% if post.get_score > 0 %}bg-success{% elif post.get_score < 0 %}bg-danger{% else %}bg-light text-dark border{% endif %} px-3 py-2 shadow-sm">
                             合計: {{ post.get_score }} pt
                         </span>
                     </div>
@@ -120,26 +127,34 @@
                     <h6 class="fw-bold small mb-3 text-secondary">
                         <i class="bi bi-chat-dots"></i> コメント ({{ post.comments.count }})
                     </h6>
-
-                    {% for comment in post.comments.all %}
-                    <div class="bg-white p-2 rounded mb-2 small shadow-sm">
-                        <div class="d-flex justify-content-between border-bottom mb-1 pb-1">
-                            <strong class="text-info">{{ comment.author.first_name|default:comment.author.username }}</strong>
-                            <span class="text-muted" style="font-size: 0.7rem;">{{ comment.created_at|date:"m/d H:i" }}</span>
+                    <div id="comment-list-{{ post.id }}">
+                        {% for comment in post.comments.all %}
+                        <div class="bg-white p-2 rounded mb-2 small shadow-sm">
+                            <div class="d-flex justify-content-between border-bottom mb-1 pb-1">
+                                <strong class="text-info">{{ comment.author.first_name|default:comment.author.username }}</strong>
+                                <span class="text-muted" style="font-size: 0.7rem;">{{ comment.created_at|date:"m/d H:i" }}</span>
+                            </div>
+                            <div class="text-dark mb-1">{{ comment.content }}</div>
+                                <!-- index.html のコメント部分 -->
+                                <div class="mt-1 d-flex gap-2" style="font-size: 0.7rem;">
+                                    <button class="btn btn-link btn-sm text-decoration-none p-0" 
+                                            onclick="sendReaction({{ comment.id }}, 'good')">
+                                        👍 <span id="good-count-{{ comment.id }}">{{ comment.good_count }}</span>
+                                    </button>
+                                    
+                                    <button class="btn btn-link btn-sm text-decoration-none p-0 text-secondary" 
+                                            onclick="sendReaction({{ comment.id }}, 'bad')">
+                                        👎 <span id="bad-count-{{ comment.id }}">{{ comment.bad_count }}</span>
+                                    </button>
+                                </div>
                         </div>
-                        <div class="text-dark mb-1">{{ comment.content }}</div>
-                        <div class="mt-1 d-flex gap-2" style="font-size: 0.7rem;">
-                            <a href="{% url 'comment_reaction' comment.id 'good' %}" class="text-decoration-none">👍 {{ comment.good_count }}</a>
-                            <a href="{% url 'comment_reaction' comment.id 'bad' %}" class="text-decoration-none">👎 {{ comment.bad_count }}</a>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-
                     {% if user.is_authenticated %}
-                    <form action="{% url 'add_comment' post.id %}" method="POST" class="mt-3">
+                    <form id="comment-form-{{ post.id }}" onsubmit="submitComment(event, {{ post.id }})" class="mt-3">
                         {% csrf_token %}
                         <div class="input-group input-group-sm">
-                            <input type="text" name="content" class="form-control" placeholder="コメントを書く..." required>
+                            <input type="text" name="content" id="comment-input-{{ post.id }}" class="form-control" placeholder="コメントを書く..." required>
                             <button class="btn btn-info text-white" type="submit">投稿</button>
                         </div>
                     </form>
@@ -165,4 +180,127 @@
         animation: pulse 1s infinite;
     }
 </style>
+
+<script>
+function sendReaction(commentId, type) {
+    const url = `/comment/${commentId}/reaction/${type}/`;
+
+    fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 数字を更新
+        document.getElementById(`good-count-${commentId}`).innerText = data.good_count;
+        document.getElementById(`bad-count-${commentId}`).innerText = data.bad_count;
+    })
+}
+
+function submitComment(event, postId) {
+    event.preventDefault();
+
+    const form = document.getElementById(`comment-form-${postId}`);
+    const formData = new FormData(form);
+    const inputField = document.getElementById(`comment-input-${postId}`);
+
+    fetch(`/post/${postId}/comment/`, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            const list = document.getElementById(`comment-list-${postId}`);
+            
+            // 名前・ID・ボタンを含める
+            const newComment = `
+                <div class="bg-white p-2 rounded mb-2 small shadow-sm">
+                    <div class="d-flex justify-content-between border-bottom mb-1 pb-1">
+                        <strong class="text-info">${data.author_display_name}</strong>
+                        <span class="text-muted" style="font-size: 0.7rem;">${data.created_at}</span>
+                    </div>
+                    <div class="text-dark mb-1">${data.content}</div>
+                    
+                    <!-- アイコンと数字の部分 -->
+                    <div class="mt-1 d-flex gap-2" style="font-size: 0.7rem;">
+                        <button type="button" id="comment-good-btn-${data.comment_id}" 
+                                onclick="sendCommentReaction(${data.comment_id}, 'good')" 
+                                class="btn btn-link btn-sm text-decoration-none p-0 text-muted">
+                            👍 <span id="comment-good-count-${data.comment_id}">0</span>
+                        </button>
+                        <button type="button" id="comment-bad-btn-${data.comment_id}" 
+                                onclick="sendCommentReaction(${data.comment_id}, 'bad')" 
+                                class="btn btn-link btn-sm text-decoration-none p-0 text-muted">
+                            👎 <span id="comment-bad-count-${data.comment_id}">0</span>
+                        </button>
+                    </div>
+                </div>`;            
+            list.insertAdjacentHTML('beforeend', newComment);
+            inputField.value = '';
+        }
+    });
+}
+
+function sendPostReaction(postId, type) {
+    fetch(`/post/${postId}/eval/${type}/`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => {
+        // もし自分自身の投稿などで 403 エラーが返ってきたら
+        if (!response.ok) {
+            if (response.status === 403) {
+                alert("自分の投稿にはリアクションできません。");
+            }
+            // エラー時はここで処理を中断させる
+            throw new Error('Action not allowed');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // ここに到達するのは「成功したとき」だけ
+        document.getElementById(`post-good-count-${postId}`).innerText = data.good_count;
+        document.getElementById(`post-bad-count-${postId}`).innerText = data.bad_count;
+
+        // スコアと見た目の更新
+        const scoreElement = document.getElementById(`post-score-${postId}`);
+        if (scoreElement) {
+            scoreElement.innerText = `合計: ${data.good_count - data.bad_count} pt`;
+        }
+        updatePostButtonVisuals(postId, data.status, type);
+    })
+    .catch(error => {
+        console.log("Reaction error:", error.message);
+    });
+}
+
+function updatePostButtonVisuals(postId, status, type) {
+    const gBtn = document.getElementById(`post-good-btn-${postId}`);
+    const bBtn = document.getElementById(`post-bad-btn-${postId}`);
+    const gIcon = document.getElementById(`post-good-icon-${postId}`);
+    const bIcon = document.getElementById(`post-bad-icon-${postId}`);
+
+    // いったんリセット（枠線のみ）
+    gBtn.classList.replace('btn-success', 'btn-outline-success');
+    gBtn.classList.remove('text-white');
+    gIcon.classList.replace('bi-hand-thumbs-up-fill', 'bi-hand-thumbs-up');
+
+    bBtn.classList.replace('btn-secondary', 'btn-outline-secondary');
+    bBtn.classList.remove('text-white');
+    bIcon.classList.replace('bi-hand-thumbs-down-fill', 'bi-hand-thumbs-down');
+
+    // 追加・切り替えされた場合のみ塗りつぶす
+    if (status === 'added' || status === 'switched') {
+        if (type === 'good') {
+            gBtn.classList.replace('btn-outline-success', 'btn-success');
+            gBtn.classList.add('text-white');
+            gIcon.classList.replace('bi-hand-thumbs-up', 'bi-hand-thumbs-up-fill');
+        } else {
+            bBtn.classList.replace('btn-outline-secondary', 'btn-secondary');
+            bBtn.classList.add('text-white');
+            bIcon.classList.replace('bi-hand-thumbs-down', 'bi-hand-thumbs-down-fill');
+        }
+    }
+}
+</script>
 {% endblock %}
