@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Profile
 from django.core.exceptions import ValidationError
+from .models import Comment
 
 
 def validate_nickname(value, is_staff):
@@ -90,3 +91,22 @@ class ProfileForm(forms.ModelForm):
         # 共通関数を呼び出す（修正漏れを防げる！）
         validate_nickname(first_name, self.instance.is_staff)
         return first_name
+
+
+# コメント
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ["content"]  # 投稿する内容はコメント本文だけ
+        widgets = {
+            "content": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "コメントを入力してください...",
+                }
+            ),
+        }
+        labels = {
+            "content": "コメント",
+        }

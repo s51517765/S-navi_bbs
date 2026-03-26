@@ -2,8 +2,8 @@
 from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import CustomUserCreationForm
-from .models import Post, Profile, Evaluation
+from .forms import CustomUserCreationForm, ProfileForm, CommentForm
+from .models import Post, Profile, Evaluation, Comment
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -22,7 +22,6 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
 from django.utils import timezone
-from .forms import ProfileForm
 from django.contrib.auth.decorators import login_required
 
 
@@ -32,22 +31,42 @@ class PostListView(LoginRequiredMixin, ListView):
     template_name = "board/index.html"
     context_object_name = "posts"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["user_points"] = self.request.user.profile.points
-        return context
+
+class PostListView(LoginRequiredMixin, ListView):
+    model = Post
+    template_name = "board/index.html"
+    context_object_name = "posts"
 
     def get_queryset(self):
-        # ポイントチェック
-        if self.request.user.profile.points <= 0:
+        # 1. ユーザーのプロフィールを取得
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+
+        # 2. ポイント不足で空になっていないかDBを確認（管理画面で増やしておくと確実）
+        if profile.points <= 0:
             return Post.objects.none()
 
-        # ポイントがある場合は全件取得し、評価を付与
-        queryset = Post.objects.all().order_by("-created_at")
+        # 3. データをリストとして確定させる（属性が消えるのを防ぐ）
+        queryset = list(
+            Post.objects.all().prefetch_related("comments").order_by("-created_at")
+        )
+        # queryset = (            Post.objects.all().prefetch_related("comments").order_by("-created_at")        )
+
         for post in queryset:
-            user_eval = post.evaluations.filter(user=self.request.user).first()
-            post.my_eval = user_eval.value if user_eval else None
+            # 評価情報を直接付与
+            post.good_count = post.evaluations.filter(value="good").count()
+            post.bad_count = post.evaluations.filter(value="bad").count()
+            # スコア計算
+            post.get_score = (post.good_count * 3) - (post.bad_count * 1)
+
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # テンプレートに渡す変数を確実にセット
+        context["posts"] = self.get_queryset()
+        context["user_points"] = self.request.user.profile.points
+        context["comment_form"] = CommentForm()
+        return context
 
 
 # 新規投稿（こちらは既にログイン必須のはず）
@@ -321,3 +340,59 @@ def profile_edit(request):
         form = ProfileForm(instance=user)
 
     return render(request, "board/profile_edit.html", {"form": form})
+
+
+# コメント投稿（Post詳細ビューなどに組み込む）
+@login_required
+def add_comment(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.author = request.user
+            comment.save()
+            # ポイント付与
+            profile, _ = Profile.objects.get_or_create(user=request.user)
+            profile.points += 5
+            profile.save()
+
+    # 詳細画面(post_detail)ではなく、一覧画面(index)へ戻す
+    return redirect("index")
+
+
+# リアクション処理
+@login_required
+def comment_reaction(request, comment_id, reaction_type):
+    comment = get_object_or_404(Comment, id=comment_id)
+    # 自分のコメントにはリアクションできないようにする（推奨）
+    if comment.author == request.user:
+        return redirect("post_detail", pk=comment.post.id)
+
+    profile, _ = Profile.objects.get_or_create(user=comment.author)
+
+    if reaction_type == "good":
+        comment.good_count += 1
+        profile.points += 2  # Goodをもらったら2ポイント
+    elif reaction_type == "bad":
+        comment.bad_count += 1
+        profile.points -= 1  # Badをもらったら-1ポイント（任意）
+
+    comment.save()
+    profile.save()
+    return redirect("post_detail", pk=comment.post.id)
+
+
+def post_detail(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    # 詳細画面でもコメント入力用のフォームを表示するために渡す
+    comment_form = CommentForm()
+    return render(
+        request,
+        "board/post_detail.html",
+        {
+            "post": post,
+            "comment_form": comment_form,
+        },
+    )

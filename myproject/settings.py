@@ -29,12 +29,6 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # ついでに DEBUG も切り出すと安全です
 DEBUG = os.getenv("DEBUG") == "True"
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-o0r!oixi+6ad#i&muo-l_!2odosz=i_epegip6oa3d9u2+4__j"
-
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 # Application definition

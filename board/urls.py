@@ -1,7 +1,9 @@
 # board/urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from . import views
+
+# from . import views
+from board import views
 from .views import (
     PostListView,
     PostCreateView,
@@ -25,6 +27,16 @@ urlpatterns = [
         "post/<int:post_id>/eval/<str:eval_type>/",
         views.evaluate_post,
         name="evaluate_post",
+    ),
+    # 1. 投稿の詳細画面を表示する
+    path("post/<int:pk>/", views.post_detail, name="post_detail"),
+    # 2. コメントを追加する（投稿のIDを post_id として渡す）
+    path("post/<int:post_id>/comment/", views.add_comment, name="add_comment"),
+    # 3. リアクション（Good/Bad）を送る
+    path(
+        "comment/<int:comment_id>/reaction/<str:reaction_type>/",
+        views.comment_reaction,
+        name="comment_reaction",
     ),
     # パスワードリセット用のURL
     path(

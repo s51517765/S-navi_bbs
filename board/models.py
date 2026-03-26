@@ -73,8 +73,10 @@ class Post(models.Model):
     def bad_count(self):
         return self.evaluations.filter(value="bad").count()
 
-    def get_score(self):
-        return (self.good_count() * 3) - self.bad_count()
+    def get_score(self):  # @property が付いていないことを確認
+        goods = self.evaluations.filter(value="good").count()
+        bads = self.evaluations.filter(value="bad").count()
+        return (goods * 3) - (bads * 1)
 
 
 # 同じユーザーが同じ投稿に1回しか評価できない設定
@@ -91,3 +93,21 @@ class Evaluation(models.Model):
             "user",
             "post",
         )
+
+
+class Comment(models.Model):
+    post = models.ForeignKey("Post", on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField(max_length=500, verbose_name="コメント内容")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # リアクション用
+    good_count = models.IntegerField(default=0)
+    bad_count = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.author.username}のコメント - {self.content[:10]}"
+
+    def get_good_count(self):
+        # もし good_count という整数フィールドがないなら、これで計算
+        return self.reactions.filter(value="good").count()
