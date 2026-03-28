@@ -21,18 +21,18 @@ urlpatterns = [
     path("signup/", SignUpView.as_view(), name="signup"),
     path("activate/<uidb64>/<token>/", views.activate, name="activate"),
     path("profile/edit/", views.profile_edit, name="profile_edit"),
-    path("post/<int:pk>/edit/", PostUpdateView.as_view(), name="post_edit"),
-    path("post/<int:pk>/delete/", PostDeleteView.as_view(), name="post_delete"),
+    # path("post/<int:pk>/edit/", PostUpdateView.as_view(), name="post_edit"),
+    # path("post/<int:pk>/delete/", PostDeleteView.as_view(), name="post_delete"),
     path(
         "post/<int:post_id>/eval/<str:eval_type>/",
         views.evaluate_post,
         name="evaluate_post",
     ),
-    # 1. 投稿の詳細画面を表示する
+    # 投稿の詳細画面を表示する
     path("post/<int:pk>/", views.post_detail, name="post_detail"),
-    # 2. コメントを追加する（投稿のIDを post_id として渡す）
+    # コメントを追加する（投稿のIDを post_id として渡す）
     path("post/<int:post_id>/comment/", views.add_comment, name="add_comment"),
-    # 3. リアクション（Good/Bad）を送る
+    # リアクション（Good/Bad）を送る
     path(
         "comment/<int:comment_id>/reaction/<str:reaction_type>/",
         views.comment_reaction,

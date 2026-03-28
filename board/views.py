@@ -39,24 +39,30 @@ class PostListView(LoginRequiredMixin, ListView):
     context_object_name = "posts"
 
     def get_queryset(self):
-        # 1. ユーザーのプロフィールを取得
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
 
-        # 2. ポイント不足で空になっていないかDBを確認（管理画面で増やしておくと確実）
         if profile.points <= 0:
             return Post.objects.none()
 
-        # 3. データをリストとして確定させる（属性が消えるのを防ぐ）
         queryset = list(
-            Post.objects.all().prefetch_related("comments").order_by("-created_at")
+            Post.objects.all()
+            .prefetch_related("comments", "reactions")
+            .order_by("-created_at")
         )
 
+        user_reactions = {
+            r.post_id: r.reaction_type
+            for r in PostReaction.objects.filter(user=self.request.user)
+        }
+
         for post in queryset:
-            # 評価情報を直接付与
-            post.good_count = post.evaluations.filter(value="good").count()
-            post.bad_count = post.evaluations.filter(value="bad").count()
-            # スコア計算
-            post.get_score = (post.good_count * 3) - (post.bad_count * 1)
+            # プロパティとして値をセット
+            post.good_count_val = post.get_good_count()
+            post.bad_count_val = post.get_bad_count()
+            post.my_eval = user_reactions.get(post.id)
+
+            # ★ 変数名を display_score に変更して計算
+            post.display_score = (post.good_count_val * 3) - (post.bad_count_val * 1)
 
         return queryset
 
@@ -373,7 +379,9 @@ def comment_reaction(request, comment_id, reaction_type):
 
     # 自分のコメントにはリアクションできないようにする
     if comment.author == request.user:
-        return redirect("post_detail", pk=comment.post.id)
+        return JsonResponse(
+            {"error": "自分のコメントにはリアクションできません"}, status=403
+        )
 
     # ユーザーがこのコメントに対して持っている既存のリアクションを探す
     reaction = CommentReaction.objects.filter(

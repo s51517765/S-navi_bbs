@@ -59,8 +59,6 @@ class Post(models.Model):
     def __str__(self):
         return f"{self.shop_name} - {self.cast_name}"
 
-
-"""
     def get_score(self):
         # この投稿に紐付く評価をすべて取得
         evals = self.evaluations.all()
@@ -69,17 +67,15 @@ class Post(models.Model):
         bads = evals.filter(value="bad").count()
         return (goods * 3) - bads
 
-    def good_count(self):
-        return self.evaluations.filter(value="good").count()
+    def get_good_count(self):
+        return self.reactions.filter(reaction_type="good").count()
 
-    def bad_count(self):
-        return self.evaluations.filter(value="bad").count()
+    def get_bad_count(self):
+        return self.reactions.filter(reaction_type="bad").count()
 
     def get_score(self):  # @property が付いていないことを確認
-        goods = self.evaluations.filter(value="good").count()
-        bads = self.evaluations.filter(value="bad").count()
-        return (goods * 3) - (bads * 1)
-"""
+        # Goodは3pt、Badは-1ptで計算
+        return (self.get_good_count() * 3) - self.get_bad_count()
 
 
 # 同じユーザーが同じ投稿に1回しか評価できない設定
@@ -112,8 +108,10 @@ class Comment(models.Model):
         return f"{self.author.username}のコメント - {self.content[:10]}"
 
     def get_good_count(self):
-        # もし good_count という整数フィールドがないなら、これで計算
-        return self.reactions.filter(value="good").count()
+        return self.reactions.filter(reaction_type="good").count()
+
+    def get_bad_count(self):
+        return self.reactions.filter(reaction_type="bad").count()
 
 
 class CommentReaction(models.Model):
