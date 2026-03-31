@@ -49,35 +49,57 @@
 
         <!-- 投稿一覧ループ -->
         {% for post in posts %}
-        <div class="card mb-4 shadow-sm border-0">
+        <div class="card mb-4 shadow-sm border-primary-subtle">
             <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <span class="badge bg-secondary mb-2">{{ post.visit_date|date:"Y/m" }} 訪問</span>
-                        <h4 class="card-title text-primary fw-bold mb-0">
-                            {% if post.shop_url %}
-                            <a href="{{ post.shop_url }}" target="_blank" class="text-decoration-none">{{ post.shop_name }}</a>
-                            {% else %}
-                            {{ post.shop_name }}
-                            {% endif %}
-                        </h4>
-                    </div>
-                    <div class="text-warning fs-5">
-                        {% if post.stars == 5 %}★★★★★
-                        {% elif post.stars == 4 %}★★★★☆
-                        {% elif post.stars == 3 %}★★★☆☆
-                        {% elif post.stars == 2 %}★★☆☆☆
-                        {% else %}★☆☆☆☆{% endif %}
-                    </div>
-                </div>
 
-                <div class="mb-3">
-                    <span class="text-dark fw-bold me-2">キャスト：</span>
-                    <span class="badge bg-light text-dark border p-2">{{ post.cast_name|default:"（未記入）" }}</span>
-                    {% if post.want_repeat %}
-                    <span class="badge bg-danger ms-2 shadow-sm"><i class="bi bi-fire"></i> リピ確定！</span>
-                    {% endif %}
-                </div>
+                    <!-- ヘッダー部分：訪問日、店名、星評価 -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <div class="mb-2">
+                                <span class="badge bg-secondary">{{ post.visit_date|date:"Y/m" }} 訪問</span>
+                            </div>
+                            <h5 class="card-title fw-bold mb-0">
+                                店名：<span class="badge bg-light text-dark border py-2 px-3">{{ post.shop_name }}</span>
+                                {% if post.shop_url %}
+                                    <a href="{{ post.shop_url }}" target="_blank" class="btn btn-sm btn-outline-info py-0">
+                                        <i class="bi bi-link-45deg"></i> Web</a>
+                                {% else %}
+                                    {{ post.shop_name }}
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="text-warning fs-5" title="評価：{{ post.stars }}">
+                            {% if post.stars == 5 %}★★★★★
+                            {% elif post.stars == 4 %}★★★★☆
+                            {% elif post.stars == 3 %}★★★☆☆
+                            {% elif post.stars == 2 %}★★☆☆☆
+                            {% else %}★☆☆☆☆{% endif %}
+                        </div>
+                    </div>
+
+                    <!-- キャスト・リピート情報 -->
+                    <div class="mb-3 d-flex align-items-center flex-wrap gap-2">
+                        <span class="text-dark fw-bold">キャスト：</span>
+                        
+                        <!-- 名前バッジ -->
+                        <span class="badge bg-light text-dark border py-2 px-3">
+                            {{ post.cast_name|default:"（未記入）" }}
+                        </span>
+
+                        {% if post.cast_url %}
+                            <a href="{{ post.cast_url }}" target="_blank" class="btn btn-sm btn-outline-info py-0">
+                                <i class="bi bi-link-45deg"></i> Web
+                            </a>
+                        {% endif %}
+
+                        <!-- リピート確定バッジ -->
+                        {% if post.want_repeat %}
+                            <span class="badge bg-danger shadow-sm ms-auto py-2">
+                                <i class="bi bi-fire"></i> リピ確定！
+                            </span>
+                        {% endif %}
+                    </div>
+
 
                 {% if post.content %}
                 <div class="card-text text-secondary bg-light p-3 rounded mb-3" style="white-space: pre-wrap; border-left: 4px solid #dee2e6;">{{ post.content }}</div>
@@ -118,9 +140,7 @@
                         </span>
                     </div>               
                 </div>
-
-                <hr class="text-muted opacity-25">
-
+                <br>
                 <!-- 投稿者情報 -->
                 <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
                     <div>
@@ -129,35 +149,56 @@
                         <span class="ms-2">{{ post.created_at|date:"Y/m/d H:i" }}</span>
                     </div>
                 </div>
+                
+                <hr class="text-muted opacity-25">
+                <!-- コメントがある場合のみ「コメントを表示」を表示 -->
+                {% if post.comments.count > 0 %}
+                <div class="text-center mt-2">
+                    <button id="show-more-btn-{{ post.id }}" 
+                            class="btn btn-link btn-sm text-decoration-none fw-bold text-primary" 
+                            onclick="toggleComments({{ post.id }})">
+                        <i class="bi bi-plus-circle-fill me-1"></i> コメントを表示
+                    </button>
+                </div>
+                {% else %}
+                <div class="text-center mt-2">
+                    <button id="show-more-btn-{{ post.id }}" 
+                            class="btn btn-link btn-sm text-decoration-none fw-bold text-success" 
+                            onclick="toggleComments({{ post.id }})">
+                        <i class="bi bi-plus-circle-fill me-1"></i> コメントはありません
+                    </button>
+                </div>                
+                {% endif %}
 
                 <!-- コメントセクション -->
                 <div class="mt-3 bg-light p-3 rounded border-start border-info border-4">
                     <h6 class="fw-bold small mb-3 text-secondary">
                         <i class="bi bi-chat-dots"></i> コメント ({{ post.comments.count }})
-                    </h6>
-                    <div id="comment-list-{{ post.id }}">
-                        {% for comment in post.comments.all %}
-                        <div class="bg-white p-2 rounded mb-2 small shadow-sm">
-                            <div class="d-flex justify-content-between border-bottom mb-1 pb-1">
-                                <strong class="text-info">{{ comment.author.first_name|default:comment.author.username }}</strong>
-                                <span class="text-muted" style="font-size: 0.7rem;">{{ comment.created_at|date:"m/d H:i" }}</span>
-                            </div>
-                            <div class="text-dark mb-1">{{ comment.content }}</div>
-                                <!-- index.html のコメント部分 -->
-                                <div class="mt-1 d-flex gap-2" style="font-size: 0.7rem;">
-                                    <button class="btn btn-link btn-sm text-decoration-none p-0" 
-                                            onclick="sendCommentReaction({{ comment.id }}, 'good')">
-                                        👍 <span id="comment-good-count-{{ comment.id }}">{{ comment.get_good_count }}</span>
-                                    </button>
-                                    
-                                    <button class="btn btn-link btn-sm text-decoration-none p-0 text-secondary" 
-                                            onclick="sendCommentReaction({{ comment.id }}, 'bad')">
-                                        👎 <span id="comment-bad-count-{{ comment.id }}">{{ comment.get_bad_count }}</span>
-                                    </button>
+                    </h6>                    
+                    <!-- コメントリスト全体を囲む div -->
+                    <div id="comment-container-{{ post.id }}" class="comment-area">
+                        <div id="comment-list-{{ post.id }}">
+                            {% for comment in post.comments.all %}
+                                <!-- forloop.counter を使って2件目以降に 'd-none' (非表示) クラスをつける -->
+                                <div class="bg-white p-2 rounded mb-2 small shadow-sm post-comment {% if forloop.counter > 0 %}d-none extra-comment-{{ post.id }}{% endif %}">
+                                    <div class="d-flex justify-content-between border-bottom mb-1 pb-1">
+                                        <strong class="text-info">{{ comment.author.first_name|default:comment.author.username }}</strong>
+                                        <span class="text-muted" style="font-size: 0.7rem;">{{ comment.created_at|date:"m/d H:i" }}</span>
+                                    </div>
+                                    <div class="text-dark mb-1">{{ comment.content }}</div>
+                                    <div class="mt-1 d-flex gap-2" style="font-size: 0.7rem;">
+                                        <button class="btn btn-link btn-sm text-decoration-none p-0" onclick="sendCommentReaction({{ comment.id }}, 'good')">
+                                            👍 <span id="comment-good-count-{{ comment.id }}">{{ comment.get_good_count }}</span>
+                                        </button>
+                                        <button class="btn btn-link btn-sm text-decoration-none p-0 text-secondary" onclick="sendCommentReaction({{ comment.id }}, 'bad')">
+                                            👎 <span id="comment-bad-count-{{ comment.id }}">{{ comment.get_bad_count }}</span>
+                                        </button>
+                                    </div>
                                 </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
+
                     {% if user.is_authenticated %}
                     <form id="comment-form-{{ post.id }}" onsubmit="submitComment(event, {{ post.id }})" class="mt-3">
                         {% csrf_token %}
@@ -168,19 +209,22 @@
                     </form>
                     {% endif %}
                 </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-5 text-muted">まだ投稿がありません。</div>
+                        {% endfor %}
+                        {% endif %}
+
+                    </div>
+                </div>
+
+                <!-- メッセージを表示する土台 -->
+                <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>
             </div>
         </div>
-        {% empty %}
-        <div class="text-center py-5 text-muted">まだ投稿がありません。</div>
-        {% endfor %}
-        {% endif %}
-
     </div>
 </div>
-
-<!-- メッセージを表示する土台 -->
-<div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>
-
 <style>
     @keyframes pulse {
         0% { opacity: 1; }
@@ -353,6 +397,30 @@ function showToast(message) {
 
     // 消えたら要素を削除して軽くする
     toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+// コメントの開閉
+function toggleComments(postId) {
+    const extraComments = document.querySelectorAll(`.extra-comment-${postId}`);
+    const btn = document.getElementById(`show-more-btn-${postId}`);
+    
+    if (extraComments.length === 0) return;
+
+    if (extraComments[0].classList.contains('d-none')) {
+        // 表示する
+        extraComments.forEach(el => {
+            el.classList.remove('d-none');
+            el.classList.add('animate-fade-in'); // ふわっと出すアニメーション（任意）
+        });
+        // 緑色を維持しつつアイコンとテキストを変更
+        btn.innerHTML = '<i class="bi bi-dash-circle-fill me-1"></i> コメントをたたむ';
+        btn.classList.replace('text-secondary', 'text-success'); // たたむ時は少し控えめな色にしてもOK
+    } else {
+        // 隠す
+        extraComments.forEach(el => el.classList.add('d-none'));
+        btn.innerHTML = '<i class="bi bi-plus-circle-fill me-1"></i> コメントを表示';
+        btn.classList.replace('text-secondary', 'text-success');
+    }
 }
 </script>
 {% endblock %}
