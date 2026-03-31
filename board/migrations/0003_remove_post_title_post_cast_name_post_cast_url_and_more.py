@@ -9,58 +9,77 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('board', '0002_rename_aauthor_post_author'),
+        ("board", "0002_rename_aauthor_post_author"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='post',
-            name='title',
+            model_name="post",
+            name="title",
         ),
         migrations.AddField(
-            model_name='post',
-            name='cast_name',
-            field=models.CharField(blank=True, default='', max_length=100, null=True, verbose_name='キャスト名'),
+            model_name="post",
+            name="cast_name",
+            field=models.CharField(
+                blank=True,
+                default="",
+                max_length=100,
+                null=True,
+                verbose_name="キャスト名",
+            ),
         ),
         migrations.AddField(
-            model_name='post',
-            name='cast_url',
-            field=models.URLField(blank=True, default='', null=True, verbose_name='キャストURL'),
+            model_name="post",
+            name="cast_url",
+            field=models.URLField(
+                blank=True, default="", null=True, verbose_name="キャストURL"
+            ),
         ),
         migrations.AddField(
-            model_name='post',
-            name='shop_name',
-            field=models.CharField(default='', max_length=100, verbose_name='店名'),
+            model_name="post",
+            name="shop_name",
+            field=models.CharField(default="", max_length=100, verbose_name="店名"),
         ),
         migrations.AddField(
-            model_name='post',
-            name='shop_url',
-            field=models.URLField(blank=True, default='', null=True, verbose_name='URL'),
+            model_name="post",
+            name="shop_url",
+            field=models.URLField(
+                blank=True, default="", null=True, verbose_name="URL"
+            ),
         ),
         migrations.AddField(
-            model_name='post',
-            name='stars',
-            field=models.IntegerField(default=3, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(5)], verbose_name='評価'),
+            model_name="post",
+            name="stars",
+            field=models.IntegerField(
+                default=3,
+                validators=[
+                    django.core.validators.MinValueValidator(0),
+                    django.core.validators.MaxValueValidator(5),
+                ],
+                verbose_name="評価",
+            ),
         ),
         migrations.AddField(
-            model_name='post',
-            name='want_repeat',
-            field=models.BooleanField(default=False, verbose_name='リピートしたいか'),
+            model_name="post",
+            name="want_repeat",
+            field=models.BooleanField(default=False, verbose_name="リピートしたいか"),
         ),
         migrations.AlterField(
-            model_name='post',
-            name='author',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="post",
+            name="author",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
+            ),
         ),
         migrations.AlterField(
-            model_name='post',
-            name='content',
-            field=models.TextField(blank=True, default='', verbose_name='感想'),
+            model_name="post",
+            name="content",
+            field=models.TextField(blank=True, default="", verbose_name="感想"),
         ),
         migrations.AlterField(
-            model_name='post',
-            name='created_at',
+            model_name="post",
+            name="created_at",
             field=models.DateTimeField(auto_now_add=True),
         ),
     ]

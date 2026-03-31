@@ -34,8 +34,9 @@ def save_user_profile(sender, instance, **kwargs):
 # 入力項目を増やした時は、defaultを指定する
 class Post(models.Model):
     # default="" を追加することで、既存データがあっても空文字で埋めてくれます
+    # blank=Falseで必須
     # 訪問日を追加
-    visit_date = models.DateField("訪問日", null=True, blank=True)
+    visit_date = models.DateField("訪問日", null=True, blank=False)
     shop_name = models.CharField("店名", max_length=100, default="")
     shop_url = models.URLField("URL", blank=True, null=True, default="")
 
@@ -44,11 +45,14 @@ class Post(models.Model):
     )
     cast_url = models.URLField("キャストURL", blank=True, null=True, default="")
 
-    content = models.TextField("感想", blank=True, default="")
+    content = models.TextField("感想", blank=False, default="")
 
     # 数値や真偽値もデフォルトを設定
     stars = models.IntegerField(
-        "評価", default=3, validators=[MinValueValidator(0), MaxValueValidator(5)]
+        "評価",
+        default="",
+        null=False,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
     )
     want_repeat = models.BooleanField("リピートしたいか", default=False)
 
