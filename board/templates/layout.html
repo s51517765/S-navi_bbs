@@ -10,7 +10,6 @@
         body {
             background-color: #f8f9fa;
         }
-
         .navbar {
             margin-bottom: 2rem;
         }
@@ -20,24 +19,36 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'index' %}">🚀 Django BBS</a>
+            <a class="navbar-brand" href="{% url 'index' %}">🚀{{ SITE_TITLE }}</a>
             <div class="navbar-nav ms-auto">
-                <div class="d-flex align-items-center text-light me-3">
-                    {% if user.is_authenticated %}
-                    <!--first_name領域にnicknameを保存している-->
-                    <span class="nav-link text-light">こんにちは、</span>
-                    <a href="{% url 'profile_edit' %}" class="text-info font-weight-bold">
-                        {% if user.first_name %}{{ user.first_name }}{% else %}{{ "firstname" }}{% endif %}
-                    </a> さん
+                {% if user.is_authenticated %}
+                <div class="d-flex align-items-center">
+                    <span class="text-light me-1">こんにちは、</span>
+                    <a href="{% url 'profile_edit' %}" class="text-info fw-bold text-decoration-none me-1">
+                        {% if user.first_name %}{{ user.first_name }}{% else %}ユーザー{% endif %}
+                    </a>
+                    <span class="text-light me-3">さん</span>
+
+                    <span class="text-light me-2">現在の所持ポイント</span>
+                    <div class="fs-5 fw-bold me-4 {% if user_points <= 5 %}text-danger animate-pulse{% else %}text-primary{% endif %}">
+                        <i class="bi bi-coin text-warning"></i> {{ user_points }} <small class="text-light fw-normal">pt</small>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <a class="btn btn-primary btn-sm shadow-sm" href="{% url 'post_create' %}">新規投稿(+{{ POST_REWARD }}pt)</a>                        
+                        <form action="{% url 'logout' %}" method="post" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-light btn-sm shadow-sm">ログアウト</button>
+                        </form>
+                        <a class="btn btn-outline-light btn-sm shadow-sm" href="{% url 'guide' %}">使い方</a> 
+                    </div>
                 </div>
-                <a class="nav-item nav-link" href="{% url 'post_create' %}">新規投稿</a>
-                <form action="{% url 'logout' %}" method="post" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-link nav-link">ログアウト</button>
-                </form>
                 {% else %}
-                <a class="nav-item nav-link" href="{% url 'login' %}">ログイン</a>
-                <a class="nav-item nav-link" href="{% url 'signup' %}">会員登録</a>
+                <div class="d-flex gap-2">
+                    <a class="nav-item nav-link" href="{% url 'login' %}">ログイン</a>
+                    <a class="nav-item nav-link" href="{% url 'signup' %}">会員登録</a>
+                    <a class="nav-item nav-link" href="{% url 'guide' %}">使い方</a>
+                </div>
                 {% endif %}
             </div>
         </div>

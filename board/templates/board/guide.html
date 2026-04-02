@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">{{ SITE_TITLE }} ご利用ガイド</h2>
+        </div>
+        <div class="card-body">
+            <h4 class="border-bottom pb-2">1. ポイントシステムについて</h4>
+            <p>当サイトでは、健全なコミュニティ維持のためにポイント制を導入しています。</p>
+            <ul>
+                <li><strong>ログイン時:</strong> 1日1回、経過日数に応じてポイントが減算されます。</li>
+                <li><strong>ポイント0:</strong> ポイントが0になると閲覧ができなくなります。</li>
+                <li><strong>新規投稿:</strong> お店の情報を投稿すると <strong>{{ POST_REWARD }}ポイント</strong> 獲得できます。</li>
+                <li><strong>Good:</strong> お店の情報やコメントに対して他のユーザーから「Good」をもらうと <strong>{{ GOOD_REWARD }}ポイント</strong> 獲得できます。</li>
+                <li><strong>Bad:</strong> 同様に「Bad」をもらうと <strong>{{ BAD_REWARD }}ポイント</strong> 没収されます。また、誹謗・中傷など不適切な行為は退会処分となる場合があります。</li>
+            </ul>
+
+            <h4 class="border-bottom pb-2 mt-4">2. 投稿のルール</h4>
+            <p>皆さんが楽しく利用できるよう、以下の内容に注意して投稿してください。</p>
+            <ul>
+                <li>特定の個人やお店、サイト運営者を誹謗中傷する内容は禁止です。</li>
+                <li>URLを貼る際は、公式なサイトのものに限定してください。</li>
+            </ul>
+
+            <div class="text-center mt-4">
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary">トップページへ戻る</a>
+                <a href="{% url 'post_create' %}" class="btn btn-primary">さっそく投稿する</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

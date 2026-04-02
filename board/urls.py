@@ -10,6 +10,7 @@ from .views import (
     SignUpView,
     PostUpdateView,
     PostDeleteView,
+    Guide,
 )
 
 
@@ -19,6 +20,7 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("post/new/", PostCreateView.as_view(), name="post_create"),
     path("signup/", SignUpView.as_view(), name="signup"),
+    path("guide", Guide.as_view(), name="guide"),
     path("activate/<uidb64>/<token>/", views.activate, name="activate"),
     path("profile/edit/", views.profile_edit, name="profile_edit"),
     # path("post/<int:pk>/edit/", PostUpdateView.as_view(), name="post_edit"),

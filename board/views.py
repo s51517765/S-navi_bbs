@@ -1,5 +1,11 @@
 # board/views.py
-from django.views.generic import ListView, CreateView
+from django.views.generic import (
+    ListView,
+    CreateView,
+    UpdateView,
+    DeleteView,
+    TemplateView,
+)
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import CustomUserCreationForm, ProfileForm, CommentForm
@@ -15,7 +21,6 @@ from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from django.views.generic import UpdateView, DeleteView
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db import transaction
 from django.views.decorators.http import require_POST
@@ -24,15 +29,10 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+import os
 
 
 # 一覧表示（ログイン必須に変更）
-class PostListView(LoginRequiredMixin, ListView):
-    model = Post
-    template_name = "board/index.html"
-    context_object_name = "posts"
-
-
 class PostListView(LoginRequiredMixin, ListView):
     model = Post
     template_name = "board/index.html"
@@ -61,7 +61,7 @@ class PostListView(LoginRequiredMixin, ListView):
             post.bad_count_val = post.get_bad_count()
             post.my_eval = user_reactions.get(post.id)
 
-            # ★ 変数名を display_score に変更して計算
+            # 変数名を display_score に変更して計算
             post.display_score = (post.good_count_val * 3) - (post.bad_count_val * 1)
 
         return queryset
@@ -117,8 +117,9 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         form.instance.author = self.request.user
 
         # ポイント加算
+        POST_REWARD = os.getenv("POST_REWARD")
         profile = self.request.user.profile
-        profile.points += 30
+        profile.points += int(POST_REWARD)
         profile.save()
 
         # 4. これで全てのフィールド（URL含む）が保存される
@@ -231,6 +232,18 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.get_object().author == self.request.user
 
 
+class Guide(TemplateView):
+    # 表示するHTMLファイルを指定
+    template_name = "board/guide.html"
+
+    def get_context_data(self, **kwargs):
+        # テンプレートに渡す追加データがあればここに記述
+        context = super().get_context_data(**kwargs)
+        # 例: ページタイトルなどを動的に渡す場合
+        context["page_title"] = "ご利用ガイド"
+        return context
+
+
 def give_good(request, post_id):
     # 1. どの投稿に対する「Good」か特定する
     post = get_object_or_404(Post, id=post_id)
@@ -280,8 +293,7 @@ def evaluate_post(request, post_id, eval_type):
         )
         status = "added"
 
-    # ★ ここで「モデルのメソッド」を呼び出して最新の数を取得する
-    # もしメソッド名が good_count なら () をつけて呼び出す
+    # ここで「モデルのメソッド」を呼び出して最新の数を取得する
     good_count = post.reactions.filter(reaction_type="good").count()
     bad_count = post.reactions.filter(reaction_type="bad").count()
 

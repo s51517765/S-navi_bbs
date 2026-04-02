@@ -4,23 +4,6 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-10">
-
-        <!-- ヘッダー部分 -->
-        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
-            <div>
-                <h2 class="fw-bold mb-0">訪問備忘録</h2>
-            </div>
-            <div class="text-end">
-                <span class="text-muted small">現在の所持ポイント</span>
-                <!-- クラス内の改行をなくし、1行にまとめてVS Codeの混乱を防ぐ -->
-                <div class="fs-4 fw-bold {% if user_points <= 5 %}text-danger animate-pulse{% else %}text-primary{% endif %}">
-                    <i class="bi bi-coin text-warning"></i> {{ user_points }} <small class="text-muted">pt</small>
-                </div>
-            </div>
-        </div>
-
-        <hr>
-
         <!-- 閲覧制限チェック -->
         {% if user_points <= 0 %}
         <div class="card border-danger shadow-lg my-5">
@@ -31,7 +14,7 @@
                 <h3 class="fw-bold text-dark">閲覧制限がかかっています</h3>
                 <p class="text-muted mb-4">
                     ポイントが 0 になりました。他の人の投稿を見るには、<br>
-                    新しくお店の情報を投稿して <strong>+30ポイント</strong> 獲得してください。
+                    新しくお店の情報を投稿して<strong>+{{ post_reward }}ポイント</strong>獲得してください。
                 </p>
                 <a href="{% url 'post_create' %}" class="btn btn-danger btn-lg px-5 shadow-sm">
                     <i class="bi bi-pencil-square"></i> 今すぐ新規投稿して解除
@@ -39,19 +22,10 @@
             </div>
         </div>
         {% else %}
-        
-        <!-- 投稿ボタン -->
-        <div class="d-flex justify-content-end mb-3">
-            <a href="{% url 'post_create' %}" class="btn btn-primary shadow-sm">
-                <i class="bi bi-pencil-square"></i> 新しく投稿する (+30pt)
-            </a>
-        </div>
-
         <!-- 投稿一覧ループ -->
         {% for post in posts %}
         <div class="card mb-4 shadow-sm border-primary-subtle">
             <div class="card-body p-4">
-
                     <!-- ヘッダー部分：訪問日、店名、星評価 -->
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
@@ -68,13 +42,16 @@
                                 {% endif %}
                             </h5>
                         </div>
-                        <div class="text-warning fs-5" title="評価：{{ post.stars }}">
-                            {% if post.stars == 5 %}★★★★★
-                            {% elif post.stars == 4 %}★★★★☆
-                            {% elif post.stars == 3 %}★★★☆☆
-                            {% elif post.stars == 2 %}★★☆☆☆
-                            {% else %}★☆☆☆☆{% endif %}
-                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="fw-bold small text-secondary">総合評価</div>
+                            <div class="text-warning fs-5" title="評価：{{ post.stars }}">
+                                {% if post.stars == 5 %}★★★★★
+                                {% elif post.stars == 4 %}★★★★☆
+                                {% elif post.stars == 3 %}★★★☆☆
+                                {% elif post.stars == 2 %}★★☆☆☆
+                                {% else %}★☆☆☆☆{% endif %}
+                            </div>
+                        </div> 
                     </div>
 
                     <!-- キャスト・リピート情報 -->
