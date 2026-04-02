@@ -23,10 +23,10 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 修正：os.getenv で環境変数から取得する
+# os.getenv で環境変数から取得する
 SECRET_KEY = os.getenv("SECRET_KEY")
 
-# ついでに DEBUG も切り出すと安全です
+# DEBUG も切り出すと安全
 DEBUG = os.getenv("DEBUG") == "True"
 
 ALLOWED_HOSTS = ["161.33.141.50", "127.0.0.1", "localhost"]
@@ -74,15 +74,19 @@ WSGI_APPLICATION = "myproject.wsgi.application"
 
 
 # Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+SQL_PASSWORD = os.getenv("SQL_PASSWORD")
+SQL_HOST = os.environ.get("SQL_HOST", "127.0.0.1")
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "sql_db",
+        "USER": "sql_user",
+        "PASSWORD": SQL_PASSWORD,  # 環境変数
+        "HOST": SQL_HOST,  # 環境変数
+        "PORT": "5432",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

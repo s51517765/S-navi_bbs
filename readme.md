@@ -1,13 +1,27 @@
 # 開発用機能
 
 ## 起動
+- nginxを使わない場合
+  
 python manage.py runserver
 
+- nginxを使う場合
+
+ポートを使っている人がいたらkillする<br>
+sudo lsof -i :8000<br>
+sudo pkill gunicorn
+
+nohup gunicorn --bind 127.0.0.1:8000 myproject.wsgi &<br>
+sudo systemctl restart nginx
+
 ## DBマイグレーション(プログラムにテーブルを追加した場合DBに反映する)
-- 設計図の作成とDBへの適用
-  
+設計図の作成とDBへの適用<br>  
 python manage.py makemigrations board<br>
 python manage.py migrate
+
+## PostgresQL
+テーブルに接続<br>
+sudo -u postgres /usr/pgsql-15/bin/psql -d sql_db
 
 ## URLs
 admin
@@ -23,11 +37,13 @@ http://127.0.0.1:8000/signup/
 
 ## 技術スタック
 
-Python3.12.12(3.13.2) / Django 6.0.3 / gunicorn / Bootstrup / nginx<br>
+Python3.12.12(3.13.2) / PostgreSQL 15.17 / Django 6.0.3 / Bootstrup / gunicorn / nginx<br>
 (3.13.2は検証環境の一部として使用)
 
 ## Library
-pip install python-dotenv
+pip install python-dotenv<br>
+pip install psycopg2-binary<br>
+pip install psycopg2-binary django
 
 ## 基本仕様
 
@@ -55,6 +71,7 @@ pip install python-dotenv
 - 課金は外部システムを使いたい
 - カテゴリME、CE、FE、管理画面から追加できる
 - 感想の入力ガイド（こういったことを入力してほしいといった）
+- ★モバイル対応（支払いまで）
 
 ### 実装済み
 - ユーザー登録はメールアドレス認証を必須、ハンドルネームを追加
@@ -67,6 +84,8 @@ pip install python-dotenv
 - 新規投稿で+30ポイント、いいねで+3ポイント、悪いねで-1ポイント、閲覧可能日数
 - 投稿に対するスレッド、コメント機能
 - 一般ユーザーには「good」機能、「bad」機能を持たせる。「bad」は通報に近いイメージ、コメントにも
+- DBをpostgresqlに変更
+
 ## 管理機能
 Djangoの標準の機能
 
