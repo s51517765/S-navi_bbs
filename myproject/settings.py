@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # DEBUG も切り出すと安全
 DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = ["161.33.141.50", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["SERVER_IP", "127.0.0.1", "localhost"]
 
 # Application definition
 

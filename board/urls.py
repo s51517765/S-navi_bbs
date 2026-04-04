@@ -8,9 +8,9 @@ from .views import (
     PostListView,
     PostCreateView,
     SignUpView,
-    PostUpdateView,
-    PostDeleteView,
     Guide,
+    # PostUpdateView,
+    # PostDeleteView,
 )
 
 

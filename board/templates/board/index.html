@@ -109,10 +109,10 @@
 
                     <!-- スコア表示 -->
                     <div class="ms-auto">
-                        <!-- post.display_score を使用。色の分岐もこれで行う -->
+                        <!-- post.point を使用。色の分岐もこれで行う -->
                         <span id="post-score-{{ post.id }}" 
-                            class="badge rounded-pill {% if post.display_score > 0 %}bg-success{% elif post.display_score < 0 %}bg-danger{% else %}bg-light text-dark border{% endif %} px-3 py-2 shadow-sm">
-                            合計: {{ post.display_score }} pt
+                            class="badge rounded-pill {% if post.point > 0 %}bg-success{% elif post.point < 0 %}bg-secondary{% else %}bg-light text-dark border{% endif %} px-3 py-2 shadow-sm">
+                            合計: {{ post.point }} pt
                         </span>
                     </div>               
                 </div>
@@ -259,7 +259,7 @@ function submitComment(event, postId) {
     });
 }
 
-// いいね処理
+// いいね(good,bad)処理
 function sendPostReaction(postId, type) {
     fetch(`/post/${postId}/eval/${type}/`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -283,9 +283,9 @@ function sendPostReaction(postId, type) {
         // スコアと見た目の更新
         const scoreElement = document.getElementById(`post-score-${postId}`);
         if (scoreElement) {
-            scoreElement.innerText = `合計: ${data.good_count - data.bad_count} pt`;
+            scoreElement.innerText = `合計: ${data.point} pt`;
         }
-        updatePostButtonVisuals(postId, data.status, type);
+        updatePostButtonVisuals(postId, data.status, type, data.point);
     })
     .catch(error => {
         console.log("Reaction error:", error.message);
@@ -325,11 +325,12 @@ function sendCommentReaction(commentId, type) {
     });
 }
 
-function updatePostButtonVisuals(postId, status, type) {
+function updatePostButtonVisuals(postId, status, type, point) {
     const gBtn = document.getElementById(`post-good-btn-${postId}`);
     const bBtn = document.getElementById(`post-bad-btn-${postId}`);
     const gIcon = document.getElementById(`post-good-icon-${postId}`);
     const bIcon = document.getElementById(`post-bad-icon-${postId}`);
+    const sIcon = document.getElementById(`post-score-${postId}`);
 
     // いったんリセット（枠線のみ）
     gBtn.classList.replace('btn-success', 'btn-outline-success');
@@ -352,6 +353,26 @@ function updatePostButtonVisuals(postId, status, type) {
             bIcon.classList.replace('bi-hand-thumbs-down', 'bi-hand-thumbs-down-fill');
         }
     }
+    // スコア表示のリセット（判定の前に追加）
+    sIcon.classList.remove(
+        'btn-success', 'btn-danger', 'btn-secondary', 
+        'btn-outline-secondary', 'btn-outline-success', 'btn-outline-danger',
+        'bg-success', 'bg-danger', 'bg-white', 'bg-light',
+        'text-white', 'text-dark', 'border'
+    );
+    if (point > 0) {
+        sIcon.classList.replace('btn-outline-success', 'btn-success');
+        sIcon.classList.add('bg-success', 'text-white');
+    } 
+    else if (point < 0) {
+        sIcon.classList.replace('btn-outline-secondary', 'btn-secondary');
+        sIcon.classList.add('bg-secondary', 'text-white');
+    } 
+    else {
+        sIcon.classList.replace('btn-outline-danger', 'btn-danger');
+        sIcon.classList.add('bg-light', 'text-dark', 'border');
+    }
+
 }
 
 // ふわっとメッセージを出す共通関数（トースト）

@@ -44,25 +44,24 @@ class PostListView(LoginRequiredMixin, ListView):
         if profile.points <= 0:
             return Post.objects.none()
 
+        # DBからスコア順や新着順で取得する
         queryset = list(
             Post.objects.all()
             .prefetch_related("comments", "reactions")
             .order_by("-created_at")
         )
-
+        # 自分がどのリアクションをしたかだけ特定する
         user_reactions = {
             r.post_id: r.reaction_type
             for r in PostReaction.objects.filter(user=self.request.user)
         }
 
         for post in queryset:
+            post.my_eval = user_reactions.get(post.id)
             # プロパティとして値をセット
             post.good_count_val = post.get_good_count()
             post.bad_count_val = post.get_bad_count()
             post.my_eval = user_reactions.get(post.id)
-
-            # 変数名を display_score に変更して計算
-            post.display_score = (post.good_count_val * 3) - (post.bad_count_val * 1)
 
         return queryset
 
@@ -92,28 +91,28 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy("index")
 
     def post(self, request, *args, **kwargs):
-        # 1. 送られてきたデータをコピーする
+        # 送られてきたデータをコピーする
         data = request.POST.copy()
         visit_date_raw = data.get("visit_date")
 
-        # 2. "2026-03" を "2026-03-01" に書き換えてから Django に渡す
+        # "2026-03" を "2026-03-01" に書き換えてから Django に渡す
         # 日付は、月レベルにあいまいにする
         if visit_date_raw and len(visit_date_raw) == 7:
             data["visit_date"] = visit_date_raw + "-01"
 
-        # 3. 書き換えたデータでフォームを処理する
+        # 書き換えたデータでフォームを処理する
         request.POST = data
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
-        # 1. フォームから送られてきた raw データを確認
+        # フォームから送られてきた raw データを確認
         visit_date_raw = self.request.POST.get("visit_date")
 
-        # 2. 日付が "YYYY-MM" 形式なら補完してセット
+        # 日付が "YYYY-MM" 形式なら補完してセット
         if visit_date_raw and len(visit_date_raw) == 7:
             form.instance.visit_date = visit_date_raw + "-01"
 
-        # 3. 投稿者をセット
+        # 投稿者をセット
         form.instance.author = self.request.user
 
         # ポイント加算
@@ -122,7 +121,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         profile.points += int(POST_REWARD)
         profile.save()
 
-        # 4. これで全てのフィールド（URL含む）が保存される
+        # これで全てのフィールド（URL含む）が保存される
         return super().form_valid(form)
 
 
@@ -136,12 +135,12 @@ class SignUpView(CreateView):
     )
 
     def form_valid(self, form):
-        # 1. まずユーザーを保存（is_active=False）
+        # まずユーザーを保存（is_active=False）
         user = form.save(commit=False)
         user.is_active = False
         user.save()
 
-        # 2. 保存されたあとの user オブジェクトを使ってトークンを作る
+        # 保存されたあとの user オブジェクトを使ってトークンを作る
         current_site = get_current_site(self.request)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)  # ここが重要
@@ -157,14 +156,14 @@ class SignUpView(CreateView):
             },
         )
 
-        # 3. デバッグ用にターミナルに表示
+        # デバッグ用にターミナルに表示
         print(
             f"\n--- Activation URL ---\nhttp://{current_site.domain}/activate/{uid}/{token}/\n----------------------\n"
         )
 
         send_mail(subject, message, "admin@example.com", [user.email])
 
-        # 4. super().form_valid を呼ばずに直接リダイレクトする（確実な方法）
+        # super().form_valid を呼ばずに直接リダイレクトする（確実な方法）
         messages.success(
             self.request, "ユーザー登録が完了しました。メールを確認してください。"
         )
@@ -244,24 +243,6 @@ class Guide(TemplateView):
         return context
 
 
-def give_good(request, post_id):
-    # 1. どの投稿に対する「Good」か特定する
-    post = get_object_or_404(Post, id=post_id)
-
-    # 2. 投稿した人のプロフィールを取得
-    author_profile = post.author.profile
-
-    # 3. ポイントを加算して保存
-    author_profile.points += 3
-    author_profile.save()
-
-    # 4. メッセージを表示（任意）
-    messages.success(request, f"{post.author.username}さんに3ポイント送りました！")
-
-    # 5. もとの画面（一覧画面など）に戻る
-    return redirect("index")
-
-
 # （投稿）POST以外のアクセス（直接URLを叩くなど）を禁止する
 def evaluate_post(request, post_id, eval_type):
     if not request.user.is_authenticated:
@@ -276,22 +257,45 @@ def evaluate_post(request, post_id, eval_type):
             },
             status=403,
         )
-    post = get_object_or_404(Post, id=post_id)
+
     reaction = PostReaction.objects.filter(post=post, user=request.user).first()
+
+    GOOD_REWARD = int(os.getenv("GOOD_REWARD", 10))
+    BAD_REWARD = int(os.getenv("BAD_REWARD", 5))
 
     if reaction:
         if reaction.reaction_type == eval_type:
+            # 【解除】
+            if eval_type == "good":
+                post.point -= GOOD_REWARD
+            else:
+                post.point += BAD_REWARD
             reaction.delete()
             status = "removed"
         else:
+            old_type = reaction.reaction_type
+
+            if old_type == "good":
+                post.point -= GOOD_REWARD + BAD_REWARD
+            else:
+                post.point += GOOD_REWARD + BAD_REWARD
+
             reaction.reaction_type = eval_type
             reaction.save()
             status = "switched"
     else:
+        # 【新規】
         PostReaction.objects.create(
             post=post, user=request.user, reaction_type=eval_type
         )
+        if eval_type == "good":
+            post.point += GOOD_REWARD
+        else:
+            post.point -= BAD_REWARD
         status = "added"
+
+    # DBに保存
+    post.save()
 
     # ここで「モデルのメソッド」を呼び出して最新の数を取得する
     good_count = post.reactions.filter(reaction_type="good").count()
@@ -302,6 +306,7 @@ def evaluate_post(request, post_id, eval_type):
             "good_count": good_count,
             "bad_count": bad_count,
             "status": status,
+            "point": post.point,
         }
     )
 
@@ -357,12 +362,12 @@ def profile_edit(request):
 @login_required
 def add_comment(request, post_id):
     if request.method == "POST" and request.user.is_authenticated:
-        # 1. まず、対象となる Post をデータベースから取得する（これが抜けていたはずです）
+        # まず、対象となる Post をデータベースから取得する
         post = get_object_or_404(Post, id=post_id)
 
         content = request.POST.get("content")
         if content:
-            # 2. 取得した post 変数を使ってコメントを作成
+            # 取得した post 変数を使ってコメントを作成
             comment = Comment.objects.create(
                 post=post, author=request.user, content=content
             )
@@ -372,7 +377,7 @@ def add_comment(request, post_id):
                 {
                     "status": "ok",
                     "comment_id": comment.id,
-                    "author_display_name": request.user.first_name,  # プロフィール名なら request.user.profile.nickname など
+                    "author_display_name": request.user.first_name,  # ニックネーム
                     "content": comment.content,
                     "created_at": "たった今",
                 }
@@ -434,6 +439,7 @@ def comment_reaction(request, comment_id, reaction_type):
             comment.bad_count += 1
         status = "added"
 
+    # DB更新
     comment.save()
     # リダイレクトではなくJSONデータを返す
     return JsonResponse(

@@ -1,11 +1,12 @@
-# board/models.py
+# board/models.py #root直下にもmodels.pyはあるが使っていない
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.utils import timezone
+import os
 
 
 class Profile(models.Model):
@@ -39,6 +40,7 @@ class Post(models.Model):
     visit_date = models.DateField("訪問日", null=True, blank=False)
     shop_name = models.CharField("店名", max_length=100, default="")
     shop_url = models.URLField("URL", blank=True, null=True, default="")
+    point = models.IntegerField(default=0)
 
     cast_name = models.CharField(
         "キャスト名", max_length=100, blank=True, null=True, default=""
@@ -56,30 +58,18 @@ class Post(models.Model):
     )
     want_repeat = models.BooleanField("リピートしたいか", default=False)
 
-    # ユーザーとの紐付け（ここが一番重要です）
+    # ユーザーとの紐付け
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.shop_name} - {self.cast_name}"
 
-    def get_score(self):
-        # この投稿に紐付く評価をすべて取得
-        evals = self.evaluations.all()
-        # Goodの数 × 3  +  Badの数 × (-1) を計算
-        goods = evals.filter(value="good").count()
-        bads = evals.filter(value="bad").count()
-        return (goods * 3) - bads
-
     def get_good_count(self):
         return self.reactions.filter(reaction_type="good").count()
 
     def get_bad_count(self):
         return self.reactions.filter(reaction_type="bad").count()
-
-    def get_score(self):  # @property が付いていないことを確認
-        # Goodは3pt、Badは-1ptで計算
-        return (self.get_good_count() * 3) - self.get_bad_count()
 
 
 # 同じユーザーが同じ投稿に1回しか評価できない設定
@@ -142,3 +132,43 @@ class PostReaction(models.Model):
 
     class Meta:
         unique_together = ("post", "user")  # 1人1投稿につき1反応まで
+
+
+@receiver(post_save, sender=PostReaction)
+def update_user_points_from_reaction(sender, instance, created, **kwargs):
+    # 環境変数を数値として取得（デフォルト値を設定）
+    GOOD_REWARD = int(os.getenv("GOOD_REWARD", 10))
+    BAD_REWARD = int(os.getenv("BAD_REWARD", 5))
+
+    # プロフィールを取得（なければ作成）
+    author = instance.post.author
+    profile, _ = Profile.objects.get_or_create(user=author)
+
+    if created:
+        # 新しくリアクションが追加された場合
+        if instance.reaction_type == "good":
+            profile.points += GOOD_REWARD
+        elif instance.reaction_type == "bad":
+            profile.points -= BAD_REWARD
+    else:
+        # GoodからBad（または逆）へ変更された場合（created=False）
+        if instance.reaction_type == "good":
+            profile.points += GOOD_REWARD + BAD_REWARD
+        elif instance.reaction_type == "bad":
+            profile.points -= GOOD_REWARD + BAD_REWARD
+        profile.save()
+
+
+# 取り消し（削除）された時もポイントを差し戻す必要がある場合
+@receiver(post_delete, sender=PostReaction)
+def refund_user_points(sender, instance, **kwargs):
+
+    GOOD_REWARD = int(os.getenv("GOOD_REWARD", 10))
+    BAD_REWARD = int(os.getenv("BAD_REWARD", 5))
+
+    profile, _ = Profile.objects.get_or_create(user=instance.post.author)
+    if instance.reaction_type == "good":
+        profile.points -= GOOD_REWARD
+    elif instance.reaction_type == "bad":
+        profile.points += BAD_REWARD
+    profile.save()
