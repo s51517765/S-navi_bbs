@@ -10,6 +10,7 @@
         body {
             background-color: #f8f9fa;
         }
+
         .navbar {
             margin-bottom: 2rem;
         }
@@ -17,24 +18,27 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="{% url 'index' %}">🚀{{ SITE_TITLE }}</a>
             <div class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}
                 <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-2">
-                    
+
                     <div class="d-flex flex-wrap align-items-center text-light">
                         <span class="me-1">こんにちは、</span>
                         <a href="{% url 'profile_edit' %}" class="text-info fw-bold text-decoration-none me-1">
                             {% if user.first_name %}{{ user.first_name }}{% else %}ユーザー{% endif %}
                         </a>
                         <span class="me-3">さん</span>
-                        
+
                         <div class="d-flex align-items-center ms-lg-3">
                             <span class="small me-2">現在の所持ポイント</span>
-                            <span class="fs-5 fw-bold {% if user_points <= 5 %}text-danger animate-pulse{% else %}text-primary{% endif %}">
-                                <i class="bi bi-coin text-warning"></i> {{ user_points }}<small class="text-light fw-normal">pt</small>
+                            <span
+                                class="fs-5 fw-bold {% if user_points <= 5 %}text-danger animate-pulse{% else %}text-primary{% endif %}">
+                                <i class="bi bi-coin text-warning"></i> {{ user_points }}<small
+                                    class="text-light fw-normal">pt</small>
                             </span>
                         </div>
                     </div>
@@ -43,12 +47,13 @@
                         <a class="btn btn-primary btn-sm px-3 shadow-sm" href="{% url 'post_create' %}">
                             新規投稿 (+{{ POST_REWARD }}pt)
                         </a>
-                        
+
                         <a class="btn btn-outline-light btn-sm px-3 shadow-sm" href="{% url 'guide' %}">使い方</a>
 
                         <form action="{% url 'logout' %}" method="post" class="m-0">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-secondary btn-sm px-3 text-light border-light shadow-sm">ログアウト</button>
+                            <button type="submit"
+                                class="btn btn-outline-secondary btn-sm px-3 text-light border-light shadow-sm">ログアウト</button>
                         </form>
                     </div>
                 </div>
