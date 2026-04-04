@@ -25,11 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # os.getenv で環境変数から取得する
 SECRET_KEY = os.getenv("SECRET_KEY")
-
-# DEBUG も切り出すと安全
 DEBUG = os.getenv("DEBUG") == "True"
+SERVER_IP = os.getenv("SERVER_IP")
 
-ALLOWED_HOSTS = ["SERVER_IP", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = [SERVER_IP, "127.0.0.1", "localhost"]
 
 # Application definition
 
