@@ -44,7 +44,8 @@ Python3.12.12(3.13.2) / PostgreSQL 15.17 / Django 6.0.3 / Bootstrup / gunicorn /
 pip install django<br>
 pip install python-dotenv<br>
 pip install psycopg2-binary<br>
-pip install psycopg2-binary django
+pip install psycopg2-binary django<br>
+pip install whitenoise
 
 ## 基本仕様
 
