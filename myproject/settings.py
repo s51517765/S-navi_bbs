@@ -124,6 +124,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "board", "static"),
+]
 
 # ログインが必要な時に飛ばす先のURL名（name="login" に対応）
 LOGIN_URL = "login"
