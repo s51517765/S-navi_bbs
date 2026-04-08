@@ -17,7 +17,7 @@ function submitComment(event, postId) {
 
                 // 名前・ID・ボタンを含める
                 const newComment = `
-            <div class="bg-white p-2 rounded mb-2 small shadow-sm">
+                <div class="bg-white p-2 rounded mb-2 small shadow-sm">
                 <div class="d-flex justify-content-between border-bottom mb-1 pb-1">
                     <strong class="text-info">${data.author_display_name}</strong>
                     <span class="text-muted" style="font-size: 0.7rem;">${data.created_at}</span>
