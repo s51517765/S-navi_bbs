@@ -91,9 +91,10 @@ function sendCommentReaction(commentId, type) {
         })
         .then(data => {
             // IDを使って要素を探す
-            const goodSpan = document.getElementById(`comment-good-count-${commentId}`);
-            const badSpan = document.getElementById(`comment-bad-count-${commentId}`);
-
+            // const goodSpan = document.getElementById(`comment-good-count-${commentId}`);
+            // const badSpan = document.getElementById(`comment-bad-count-${commentId}`);
+            const goodSpan = document.getElementById(`comment-good-btn-${commentId}`);
+            const badSpan = document.getElementById(`comment-bad-btn-${commentId}`);
             // 要素が見つかったときだけ中身を書き換える
             if (goodSpan) {
                 goodSpan.innerText = data.good_count;
@@ -103,6 +104,24 @@ function sendCommentReaction(commentId, type) {
 
             if (badSpan) {
                 badSpan.innerText = data.bad_count;
+            }
+
+            // 見た目のリセット（一旦両方をグレーにする）
+            [goodSpan, badSpan].forEach(span => {
+                if (span) {
+                    span.classList.remove('text-primary', 'fw-bold');
+                    span.classList.add('text-muted');
+                }
+            });
+            // 状態(added または switched)に応じて色を塗る
+            if (data.status === 'added' || data.status === 'switched') {
+                if (type === 'good' && goodSpan) {
+                    goodSpan.classList.replace('text-muted', 'text-primary');
+                    goodSpan.classList.add('fw-bold');
+                } else if (type === 'bad' && badSpan) {
+                    badSpan.classList.replace('text-muted', 'text-primary');
+                    badSpan.classList.add('fw-bold');
+                }
             }
         })
         .catch(err => {

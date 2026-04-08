@@ -1,4 +1,18 @@
 # board/views.py
+
+from .forms import CustomUserCreationForm, ProfileForm, CommentForm
+from .models import Post, Profile, Evaluation, Comment, CommentReaction, PostReaction
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.shortcuts import get_current_site
+from django.contrib.auth import login
+from django.contrib.auth.models import User
+from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib import messages
+from django.contrib.auth.signals import user_logged_in
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
 from django.views.generic import (
     ListView,
     CreateView,
@@ -6,62 +20,66 @@ from django.views.generic import (
     DeleteView,
     TemplateView,
 )
-from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import CustomUserCreationForm, ProfileForm, CommentForm
-from .models import Post, Profile, Evaluation, Comment, CommentReaction, PostReaction
-from django.contrib.sites.shortcuts import get_current_site
+from django.db import transaction
+from django.db.models import Prefetch
+from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login
-from django.contrib.auth.models import User
-from django.contrib.messages.views import SuccessMessageMixin
-from django.contrib import messages
-from django.contrib.auth.mixins import UserPassesTestMixin
-from django.db import transaction
-from django.views.decorators.http import require_POST
-from django.contrib.auth.signals import user_logged_in
-from django.dispatch import receiver
 from django.utils import timezone
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST
 import os
 
 
-# 一覧表示（ログイン必須に変更）
+# 一覧表示（ログイン必須）
 class PostListView(LoginRequiredMixin, ListView):
     model = Post
     template_name = "board/index.html"
     context_object_name = "posts"
 
     def get_queryset(self):
+        user = self.request.user
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
 
         if profile.points <= 0:
             return Post.objects.none()
 
         # DBからスコア順や新着順で取得する
+        comments_prefetch = Prefetch(
+            "comments",
+            queryset=Comment.objects.all().order_by(
+                "created_at"
+            ),  # "created_at" で固定
+        )
         queryset = list(
             Post.objects.all()
-            .prefetch_related("comments", "reactions")
+            .prefetch_related(
+                comments_prefetch, "comments", "reactions", "comments__reactions"
+            )
             .order_by("-created_at")
         )
-        # 自分がどのリアクションをしたかだけ特定する
-        user_reactions = {
-            r.post_id: r.reaction_type
-            for r in PostReaction.objects.filter(user=self.request.user)
+        # 自分が「投稿」にしたリアクションを辞書化 {post_id: type}
+        user_post_reactions = {
+            r.post_id: r.reaction_type for r in PostReaction.objects.filter(user=user)
         }
 
+        # 自分が「コメント」にしたリアクションを辞書化 {comment_id: type}
+        user_comment_reactions = {
+            r.comment_id: r.reaction_type
+            for r in CommentReaction.objects.filter(user=user)
+        }
+
+        # 各投稿とコメントに判定用データをセット
         for post in queryset:
-            post.my_eval = user_reactions.get(post.id)
-            # プロパティとして値をセット
             post.good_count_val = post.get_good_count()
             post.bad_count_val = post.get_bad_count()
-            post.my_eval = user_reactions.get(post.id)
+            post.my_eval = user_post_reactions.get(post.id)
+
+            # コメントに自分の評価をセット
+            for comment in post.comments.all():
+                comment.my_eval = user_comment_reactions.get(comment.id)
 
         return queryset
 
@@ -70,11 +88,12 @@ class PostListView(LoginRequiredMixin, ListView):
         # テンプレートに渡す変数を確実にセット
         context["posts"] = self.get_queryset()
         context["user_points"] = self.request.user.profile.points
+        context["post_reward"] = int(os.getenv("POST_REWARD", 10))
         context["comment_form"] = CommentForm()
         return context
 
 
-# 新規投稿（こちらは既にログイン必須のはず）
+# 新規投稿（こちらは既にログイン済みのはず）
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     template_name = "board/post_form.html"
@@ -192,6 +211,7 @@ def activate(request, uidb64, token):
         return render(request, "registration/activation_invalid.html")
 
 
+"""
 # 編集機能は入れない
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
@@ -229,6 +249,7 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def test_func(self):
         return self.get_object().author == self.request.user
+"""
 
 
 class Guide(TemplateView):

@@ -134,11 +134,12 @@ class PostReaction(models.Model):
         unique_together = ("post", "user")  # 1人1投稿につき1反応まで
 
 
+# 投稿に対するリアクション
 @receiver(post_save, sender=PostReaction)
 def update_user_points_from_reaction(sender, instance, created, **kwargs):
     # 環境変数を数値として取得（デフォルト値を設定）
-    GOOD_REWARD = int(os.getenv("GOOD_REWARD", 10))
-    BAD_REWARD = int(os.getenv("BAD_REWARD", 5))
+    GOOD_REWARD = int(os.getenv("GOOD_REWARD", 1))
+    BAD_REWARD = int(os.getenv("BAD_REWARD", 1))
 
     # プロフィールを取得（なければ作成）
     author = instance.post.author
@@ -156,19 +157,65 @@ def update_user_points_from_reaction(sender, instance, created, **kwargs):
             profile.points += GOOD_REWARD + BAD_REWARD
         elif instance.reaction_type == "bad":
             profile.points -= GOOD_REWARD + BAD_REWARD
-        profile.save()
+
+    profile.save()
 
 
 # 取り消し（削除）された時もポイントを差し戻す必要がある場合
 @receiver(post_delete, sender=PostReaction)
 def refund_user_points(sender, instance, **kwargs):
-
-    GOOD_REWARD = int(os.getenv("GOOD_REWARD", 10))
-    BAD_REWARD = int(os.getenv("BAD_REWARD", 5))
+    # 環境変数を数値として取得（デフォルト値を設定）
+    GOOD_REWARD = int(os.getenv("GOOD_REWARD", 1))
+    BAD_REWARD = int(os.getenv("BAD_REWARD", 1))
 
     profile, _ = Profile.objects.get_or_create(user=instance.post.author)
     if instance.reaction_type == "good":
         profile.points -= GOOD_REWARD
     elif instance.reaction_type == "bad":
         profile.points += BAD_REWARD
+
+    profile.save()
+
+
+# コメントに対するリアクション
+@receiver(post_save, sender=CommentReaction)
+def update_user_points_from_comment_reaction(sender, instance, created, **kwargs):
+    # 環境変数を数値として取得（デフォルト値を設定）
+    GOOD_REWARD = int(os.getenv("GOOD_REWARD", 1))
+    BAD_REWARD = int(os.getenv("BAD_REWARD", 1))
+
+    # コメントの投稿者のプロフィールを取得
+    author = instance.comment.author
+    profile, _ = Profile.objects.get_or_create(user=author)
+
+    if created:
+        # 新規リアクション
+        if instance.reaction_type == "good":
+            profile.points += GOOD_REWARD
+        elif instance.reaction_type == "bad":
+            profile.points -= BAD_REWARD
+    else:
+        # Good <-> Bad の切り替え
+        # (GOOD + BAD) 分を動かすことで、逆の評価を相殺して新評価を適用する
+        if instance.reaction_type == "good":
+            profile.points += GOOD_REWARD + BAD_REWARD
+        elif instance.reaction_type == "bad":
+            profile.points -= GOOD_REWARD + BAD_REWARD
+
+    profile.save()
+
+
+# 取り消し（削除）された時もポイントを差し戻す必要がある場合
+@receiver(post_delete, sender=CommentReaction)
+def refund_user_points(sender, instance, **kwargs):
+
+    GOOD_REWARD = int(os.getenv("GOOD_REWARD", 1))
+    BAD_REWARD = int(os.getenv("BAD_REWARD", 1))
+    author = instance.comment.author
+    profile, _ = Profile.objects.get_or_create(user=author)
+    if instance.reaction_type == "good":
+        profile.points -= GOOD_REWARD
+    elif instance.reaction_type == "bad":
+        profile.points += BAD_REWARD
+
     profile.save()

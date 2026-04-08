@@ -154,11 +154,11 @@
                                 </div>
                                 <div class="text-dark mb-1">{{ comment.content }}</div>
                                 <div class="mt-1 d-flex gap-2" style="font-size: 0.7rem;">
-                                    <button class="btn btn-link btn-sm text-decoration-none p-0 text-secondary"
+                                    <button type="button" id="comment-good-btn-{{ comment.id }}" class="btn btn-link btn-sm text-decoration-none p-0 {% if comment.my_eval == 'good' %}text-primary fw-bold{% else %}text-muted{% endif %}"
                                         onclick="sendCommentReaction({{ comment.id }}, 'good')">
                                         👍 <span id="comment-good-count-{{ comment.id }}">{{ comment.get_good_count }}</span>
                                     </button>
-                                    <button class="btn btn-link btn-sm text-decoration-none p-0 text-secondary"
+                                    <button type="button" id="comment-bad-btn-{{ comment.id }}" class="btn btn-link btn-sm text-decoration-none p-0 {% if comment.my_eval == 'bad' %}text-primary fw-bold{% else %}text-muted{% endif %}"
                                         onclick="sendCommentReaction({{ comment.id }}, 'bad')">
                                         👎 <span id="comment-bad-count-{{ comment.id }}">{{ comment.get_bad_count }}</span>
                                     </button>
