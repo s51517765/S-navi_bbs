@@ -31,7 +31,7 @@ Thumbs.db
 *.swp
 
 # --- 環境変数 (SECRET_KEYなどを分ける場合) ---
-.env
+*.env*
 
 # SSH情報
 *.ppk

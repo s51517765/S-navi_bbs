@@ -23,10 +23,14 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")  # これが /home/opc/prod/static に相当
+
 # os.getenv で環境変数から取得する
 SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG") == "True"
 SERVER_IP = os.getenv("SERVER_IP")
+CSRF_TRUSTED_ORIGINS = ["http://161.33.148.215:8000"]  # テスト *************
 
 ALLOWED_HOSTS = [SERVER_IP, "127.0.0.1", "localhost"]
 
@@ -120,6 +124,9 @@ USE_I18N = True
 
 USE_TZ = True
 
+LOGOUT_ON_GET = True
+
+APPEND_SLASH = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
