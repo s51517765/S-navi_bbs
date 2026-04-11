@@ -30,7 +30,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")  # これが /home/opc/prod/stati
 SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG") == "True"
 SERVER_IP = os.getenv("SERVER_IP")
-CSRF_TRUSTED_ORIGINS = ["http://161.33.148.215:8000"]  # テスト *************
+# CSRF_TRUSTED_ORIGINS = ["http://161.33.xxx.xxx:8000"]  # TODO
 
 ALLOWED_HOSTS = [SERVER_IP, "127.0.0.1", "localhost"]
 
@@ -78,17 +78,19 @@ TEMPLATES = [
 WSGI_APPLICATION = "myproject.wsgi.application"
 
 
-# Database
+# Database 環境変数
 SQL_PASSWORD = os.getenv("SQL_PASSWORD")
 SQL_HOST = os.environ.get("SQL_HOST", "127.0.0.1")
+SQL_DB_NAME = os.environ.get("SQL_DB_NAME")
+SQL_USER = os.environ.get("SQL_USER")
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "sql_db",
-        "USER": "sql_user",
-        "PASSWORD": SQL_PASSWORD,  # 環境変数
-        "HOST": SQL_HOST,  # 環境変数
+        "NAME": SQL_DB_NAME,
+        "USER": SQL_USER,
+        "PASSWORD": SQL_PASSWORD,
+        "HOST": SQL_HOST,
         "PORT": "5432",
     }
 }
