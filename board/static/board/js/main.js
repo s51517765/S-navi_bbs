@@ -77,7 +77,7 @@ function sendPostReaction(postId, type) {
         });
 }
 
-//　コメントに対するリアクション
+// コメントに対するリアクション
 function sendCommentReaction(commentId, type) {
     fetch(`/comment/${commentId}/reaction/${type}/`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -90,42 +90,32 @@ function sendCommentReaction(commentId, type) {
             return response.json();
         })
         .then(data => {
-            // IDを使って要素を探す
-            // const goodSpan = document.getElementById(`comment-good-count-${commentId}`);
-            // const badSpan = document.getElementById(`comment-bad-count-${commentId}`);
-            const goodSpan = document.getElementById(`comment-good-btn-${commentId}`);
-            const badSpan = document.getElementById(`comment-bad-btn-${commentId}`);
-            // 要素が見つかったときだけ中身を書き換える
-            if (goodSpan) {
-                goodSpan.innerText = data.good_count;
-            } else {
-                console.error(`Element not found: comment-good-count-${commentId}`);
-            }
+                // IDを使って要素を探す
+                const goodSpan = document.getElementById(`comment-good-count-${commentId}`);
+                const badSpan = document.getElementById(`comment-bad-count-${commentId}`);
+                const goodBtn = document.getElementById(`comment-good-btn-${commentId}`);
+                const badBtn = document.getElementById(`comment-bad-btn-${commentId}`);
 
-            if (badSpan) {
-                badSpan.innerText = data.bad_count;
-            }
+                // 数字だけを更新
+                if (goodSpan) goodSpan.innerText = data.good_count;
+                if (badSpan) badSpan.innerText = data.bad_count;
 
-            // 見た目のリセット（一旦両方をグレーにする）
-            [goodSpan, badSpan].forEach(span => {
-                if (span) {
-                    span.classList.remove('text-primary', 'fw-bold');
-                    span.classList.add('text-muted');
+                // 見た目のリセット（一旦両方をグレーにする）
+                [goodBtn, badBtn].forEach(btn => {
+                    if (btn) {
+                        btn.classList.remove('text-primary', 'fw-bold');
+                        btn.classList.add('text-muted');
+                    }
+                });
+
+                // 選択された方に色をつける
+                if (data.status === 'added' || data.status === 'switched') {
+                    const targetBtn = (type === 'good') ? goodBtn : badBtn;
+                    if (targetBtn) {
+                        targetBtn.classList.replace('text-muted', 'text-primary');
+                        targetBtn.classList.add('fw-bold');
+                    }
                 }
-            });
-            // 状態(added または switched)に応じて色を塗る
-            if (data.status === 'added' || data.status === 'switched') {
-                if (type === 'good' && goodSpan) {
-                    goodSpan.classList.replace('text-muted', 'text-primary');
-                    goodSpan.classList.add('fw-bold');
-                } else if (type === 'bad' && badSpan) {
-                    badSpan.classList.replace('text-muted', 'text-primary');
-                    badSpan.classList.add('fw-bold');
-                }
-            }
-        })
-        .catch(err => {
-            if (err.message !== 'Mine') console.error(err);
         });
 }
 

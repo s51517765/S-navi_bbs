@@ -30,7 +30,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")  # これが /home/opc/prod/stati
 SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG") == "True"
 SERVER_IP = os.getenv("SERVER_IP")
-# CSRF_TRUSTED_ORIGINS = ["http://161.33.xxx.xxx:8000"]  # TODO
+CSRF_TRUSTED_ORIGINS = [os.getenv("CSRF_TRUSTED_ORIGINS", "http://127.0.0.1:8001")]
 
 ALLOWED_HOSTS = [SERVER_IP, "127.0.0.1", "localhost"]
 
@@ -70,6 +70,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "board.context_processors.const_settings",
+                "board.context_processors.environment_info",
             ],
         },
     },
@@ -92,6 +93,7 @@ DATABASES = {
         "PASSWORD": SQL_PASSWORD,
         "HOST": SQL_HOST,
         "PORT": "5432",
+        "CONN_MAX_AGE": 60,  # 接続を使い回して高速化
     }
 }
 

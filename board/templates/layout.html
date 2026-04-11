@@ -13,14 +13,12 @@
 </head>
 
 <body>
-
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm" style="background-color: {{ ENV_COLOR }} !important;">
         <div class="container">
             <a class="navbar-brand" href="{% url 'index' %}">🚀{{ SITE_TITLE }}</a>
             <div class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}
                 <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-2">
-
                     <div class="d-flex flex-wrap align-items-center text-light">
                         <span class="me-1">こんにちは、</span>
                         <a href="{% url 'profile_edit' %}" class="text-info fw-bold text-decoration-none me-1">
