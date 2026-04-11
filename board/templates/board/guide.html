@@ -7,7 +7,15 @@
             <h2 class="mb-0">{{ SITE_TITLE }} ご利用ガイド</h2>
         </div>
         <div class="card-body">
-            <h4 class="border-bottom pb-2">1. ポイントシステムについて</h4>
+            <h4 class="border-bottom pb-2 mt-4">1. 掲示板利用のルール</h4>
+            <p>皆さんが楽しく利用できるよう、以下の内容に注意して利用してください。</p>
+            <ul>
+                <li>特定の個人やお店、サイト運営者を誹謗中傷する内容は禁止です。</li>
+                <li>URLを貼る際は、公式なサイトのものに限定してください。</li
+                <li>この掲示板は『教えてもらう場所』ではなく『情報を提供する場所』です。主体的なアウトプットを歓迎し、他社への依存は控えましょう。</li>
+            </ul>
+
+            <h4 class="border-bottom pb-2">2. ポイントシステムについて</h4>
             <p>当サイトでは、健全なコミュニティ維持のためにポイント制を導入しています。</p>
             <ul>
                 <li><strong>ログイン時:</strong> 1日1回、経過日数に応じてポイントが減算されます。</li>
@@ -15,15 +23,15 @@
                 <li><strong>新規投稿:</strong> お店の情報を投稿すると <strong>{{ POST_REWARD }}ポイント</strong> 獲得できます。</li>
                 <li><strong>Good:</strong> お店の情報やコメントに対して他のユーザーから「Good」をもらうと <strong>{{ GOOD_REWARD }}ポイント</strong> 獲得できます。</li>
                 <li><strong>Bad:</strong> 同様に「Bad」をもらうと <strong>{{ BAD_REWARD }}ポイント</strong> 没収されます。また、誹謗・中傷など不適切な行為は退会処分となる場合があります。</li>
+                ※ポイントルールは運用に応じて変更になる可能性があります。
             </ul>
 
-            <h4 class="border-bottom pb-2 mt-4">2. 投稿のルール</h4>
-            <p>皆さんが楽しく利用できるよう、以下の内容に注意して投稿してください。</p>
+            <h4 class="border-bottom pb-2 mt-4">3. ニックネームについて</h4>
+            投稿やコメントにはログインに使うIDとは別に設定できるニックネームが表示されます。
             <ul>
-                <li>特定の個人やお店、サイト運営者を誹謗中傷する内容は禁止です。</li>
-                <li>URLを貼る際は、公式なサイトのものに限定してください。</li>
+                <li>ニックネームは「こんにちは、〇〇さん」の部分から変更できます。</li>
+                <li>ニックネームの後ろには一意であるIDをもとにしたハッシュ値が表示されます。万が一ニックネームが重複してもこれで区別されます。</li>
             </ul>
-
             <div class="text-center mt-4">
                 <a href="{% url 'index' %}" class="btn btn-outline-secondary">トップページへ戻る</a>
                 <a href="{% url 'post_create' %}" class="btn btn-primary">さっそく投稿する</a>
