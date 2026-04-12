@@ -13,7 +13,12 @@
                     {% for field in form %}
                     <div class="mb-3">
                         <label class="form-label fw-bold small">{{ field.label }}</label>
-
+                        {# 感想入力欄の直前に注意書きを追加 #}
+                        {% if field.name == "content" %}
+                            <div class="alert alert-info py-2 px-3 small mb-2" style="border-left: 4px solid #0dcaf0;">
+                                <i class="bi bi-info-circle me-1"></i> {{ post_note|linebreaksbr }}
+                            </div>
+                        {% endif %}
                         {% if field.name == "visit_date" %}
                         {# 訪問日だけは「年月」専用の入力タイプ(month)にする #}
                         <input type="month" name="{{ field.html_name }}" class="form-control"

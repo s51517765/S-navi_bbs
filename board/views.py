@@ -147,6 +147,14 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         # これで全てのフィールド（URL含む）が保存される
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # .env からメッセージを取得。設定がない場合のデフォルトも指定できます。
+        context["post_note"] = os.getenv(
+            "POST_NOTE_MESSAGE", "感想は具体的に記入してください。"
+        )
+        return context
+
 
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
