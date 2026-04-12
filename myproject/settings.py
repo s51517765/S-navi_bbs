@@ -148,7 +148,7 @@ LOGIN_REDIRECT_URL = "index"
 # ログアウト後のリダイレクト先（掲示板トップ）
 LOGOUT_REDIRECT_URL = "login"
 
-# Mailを使ったパスワードリセット
+# Mailを使ったユーザー登録、パスワードリセット
 # 本番（Gmailなど）を使う場合はここを SMTP 設定に書き換えます
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # ターミナルに表示
 
@@ -159,3 +159,4 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_REGISTER_MESSAGE = os.getenv("EMAIL_REGISTER_MESSAGE", "掲示板")

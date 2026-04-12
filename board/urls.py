@@ -1,8 +1,7 @@
 # board/urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
-
-# from . import views
+from board.views import CustomPasswordResetView
 from board import views
 from .views import (
     PostListView,
@@ -41,9 +40,7 @@ urlpatterns = [
         name="comment_reaction",
     ),
     # パスワードリセット用のURL
-    path(
-        "password_reset/", auth_views.PasswordResetView.as_view(), name="password_reset"
-    ),
+    path("password_reset/", CustomPasswordResetView.as_view(), name="password_reset"),
     path(
         "password_reset/done/",
         auth_views.PasswordResetDoneView.as_view(),

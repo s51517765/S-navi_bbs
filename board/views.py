@@ -2,16 +2,20 @@
 
 from .forms import CustomUserCreationForm, ProfileForm, CommentForm
 from .models import Post, Profile, Evaluation, Comment, CommentReaction, PostReaction
+from django.conf import settings
 from django.core.mail import send_mail
+from django.core.mail import send_mail as django_send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth import login
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse_lazy
 from django.views.generic import (
     ListView,
@@ -162,33 +166,32 @@ class SignUpView(CreateView):
         # 保存されたあとの user オブジェクトを使ってトークンを作る
         current_site = get_current_site(self.request)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)  # ここが重要
+        token = default_token_generator.make_token(user)
 
-        subject = "【重要】会員登録を完了させてください"
-        message = render_to_string(
-            "registration/acc_active_email.html",
-            {
-                "user": user,
-                "domain": current_site.domain,
-                "uid": uid,
-                "token": token,
-            },
-        )
+        SITE_TITLE = os.getenv("SITE_TITLE", "掲示板")
+        EMAIL_REGISTER_MESSAGE = os.getenv("EMAIL_REGISTER_MESSAGE", "掲示板")
+        subject = f"【{SITE_TITLE}】会員登録を完了させてください"
 
+        context = {
+            "user": user,
+            "domain": current_site.domain,
+            "uid": uid,
+            "token": token,
+            "site_name": SITE_TITLE,
+            "email_register_message": EMAIL_REGISTER_MESSAGE,
+        }
+
+        message = render_to_string("registration/acc_active_email.html", context)
+        user.email_user(subject, message)
         # デバッグ用にターミナルに表示
         print(
             f"\n--- Activation URL ---\nhttp://{current_site.domain}/activate/{uid}/{token}/\n----------------------\n"
         )
 
-        send_mail(subject, message, "admin@example.com", [user.email])
-
-        # super().form_valid を呼ばずに直接リダイレクトする（確実な方法）
         messages.success(
             self.request, "ユーザー登録が完了しました。メールを確認してください。"
         )
         return redirect(self.success_url)
-
-        # ここから追加：first_name のバリデーション
 
 
 def activate(request, uidb64, token):
@@ -209,6 +212,46 @@ def activate(request, uidb64, token):
         return redirect("login")
     else:
         return render(request, "registration/activation_invalid.html")
+
+
+# パスワードリセットのカスタム
+class CustomPasswordResetForm(PasswordResetForm):
+    def send_mail(
+        self,
+        subject_template_name,
+        email_template_name,
+        context,
+        from_email,
+        to_email,
+        html_email_template_name=None,
+    ):
+        site_title = os.getenv("SITE_TITLE", "掲示板")
+
+        # 本文用変数
+        context["site_name"] = site_title
+
+        # 標準の送信処理に、作成した subject を渡して実行
+        super().send_mail(
+            subject_template_name,
+            email_template_name,
+            context,
+            from_email,
+            to_email,
+            html_email_template_name=html_email_template_name,
+        )
+
+
+# 2. ビューでこのカスタムフォームを使うように指定する
+class CustomPasswordResetView(PasswordResetView):
+    template_name = "registration/password_reset_form.html"
+    email_template_name = "registration/password_reset_email.html"
+    success_url = reverse_lazy("password_reset_done")
+    # 自作フォームを指定
+    form_class = CustomPasswordResetForm
+
+    def dispatch(self, *args, **kwargs):
+        print("\n!!! DEBUG: CustomPasswordResetView CALLED !!!\n")
+        return super().dispatch(*args, **kwargs)
 
 
 """
