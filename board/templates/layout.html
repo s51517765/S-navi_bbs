@@ -16,6 +16,10 @@
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm" style="background-color: {{ ENV_COLOR }} !important;">
         <div class="container">
             <a class="navbar-brand" href="{% url 'index' %}">🚀{{ SITE_TITLE }}</a>
+            <!-- Support my site -->
+            <div class="support-widget-container">
+            {{ SUPPORT_MY_SITE_SCRIPT | safe}}
+            </div>
             <div class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}
                 <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-2">
@@ -42,13 +46,20 @@
                         </a>
 
                         <a class="btn btn-outline-light btn-sm px-3 shadow-sm" href="{% url 'guide' %}">使い方</a>
-
+                        <!-- 問い合わせフォーム -->
+                        <a class="btn btn-outline-light btn-sm px-3 shadow-sm" href="{{ INQUIRY_LINK_SCRIPT }}">問い合わせ</a>
                         <form action="{% url 'logout' %}" method="post" class="m-0">
                             {% csrf_token %}
                             <button type="submit"
                                 class="btn btn-outline-secondary btn-sm px-3 text-light border-light shadow-sm">ログアウト</button>
                         </form>
                     </div>
+                </div>
+                {% else %}
+                <div class="d-flex gap-2 mt-2 mt-lg-0">
+                    <a class="btn btn-outline-light btn-sm px-3 shadow-sm" href="{% url 'guide' %}">使い方</a>
+                    <!-- 問い合わせフォーム -->
+                    <a class="btn btn-outline-light btn-sm px-3 shadow-sm" href="{{ INQUIRY_LINK_SCRIPT }}">問い合わせ</a>
                 </div>
                 {% endif %}
             </div>

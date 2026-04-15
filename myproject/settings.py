@@ -71,6 +71,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "board.context_processors.const_settings",
                 "board.context_processors.environment_info",
+                "board.context_processors.support_widget",
             ],
         },
     },

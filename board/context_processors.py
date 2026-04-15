@@ -15,4 +15,23 @@ def const_settings(request):
 def environment_info(request):
     return {
         "ENV_COLOR": os.environ.get("ENVIRONMENT_COLOR", "Black"),
+        "INQUIRY_LINK_SCRIPT": os.environ.get(
+            "INQUIRY_LINK", "<問い合わせフォームスクリプト>"
+        ),
     }
+
+
+def support_widget(request):
+    return {
+        "SUPPORT_MY_SITE_SCRIPT": os.getenv("SUPPORT_MY_SITE", "<寄付の方法スクリプト>")
+    }
+
+
+"""
+def inquiry_widget(request):
+    return {
+        "INQUIRY_LINK_SCRIPT": os.getenv(
+            "INQUIRY_LINK", "<問い合わせフォームスクリプト>"
+        )
+    }
+"""

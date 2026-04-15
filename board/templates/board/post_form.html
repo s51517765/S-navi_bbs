@@ -5,7 +5,7 @@
     <div class="col-md-8">
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
-                <h2 class="fw-bold mb-4 text-center">新規投稿 / 編集</h2>
+                <h2 class="fw-bold mb-4 text-center">新規投稿</h2>
 
                 <form method="post" novalidate>
                     {% csrf_token %}
@@ -52,6 +52,17 @@
                             キャンセルして戻る
                         </a>
                     </div>
+                    <hr>
+                    <div class="form-text small text-center fw-bold mb-2">
+                        または寄付のお返しとして閲覧日数を獲得する
+                    </div>
+                    <div class="form-text small text-center ">
+                        ＜メッセージにユーザーIDと閲覧日数希望と記載ください＞
+                    </div>
+                    <div class="support-widget-container text-center">
+                        {{ SUPPORT_MY_SITE_SCRIPT|safe }}
+                    </div>
+                    <hr>
                 </form>
             </div>
         </div>
