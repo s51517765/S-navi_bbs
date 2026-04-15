@@ -32,10 +32,8 @@
 
                         <div class="d-flex align-items-center ms-lg-3">
                             <span class="small me-2">現在の所持ポイント</span>
-                            <span
-                                class="fs-5 fw-bold {% if user_points <= 5 %}text-danger animate-pulse{% else %}text-primary{% endif %}">
-                                <i class="text-warning"></i> {{ user_points }}<small
-                                    class="text-light fw-normal">pt</small>
+                            <span class="fs-5 fw-bold {% if user_points <= 5 %}text-danger animate-pulse{% else %}text-primary{% endif %}">
+                                <i class="text-warning"></i> {{ user_points|default:"0" }} <small class="text-light fw-normal">pt</small>
                             </span>
                         </div>
                     </div>

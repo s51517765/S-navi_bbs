@@ -149,6 +149,8 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        context["user_points"] = profile.points
         # .env からメッセージを取得。設定がない場合のデフォルトも指定できます。
         context["post_note"] = os.getenv(
             "POST_NOTE_MESSAGE", "感想は具体的に記入してください。"
@@ -417,10 +419,11 @@ def reduce_points_on_login(sender, request, user, **kwargs):
 def profile_edit(request):
     # プロフィールモデルではなく、ログインユーザー自身を編集対象にする
     user = request.user
+    profile = request.user.profile
 
     if request.method == "POST":
         # instance=user とすることで、今のユーザー情報を上書き保存します
-        form = ProfileForm(request.POST, instance=user)
+        form = ProfileForm(request.POST, instance=profile)
         if form.is_valid():
             form.save()
             return redirect("index")
