@@ -42,7 +42,11 @@
                             </div>
                         </div>
                     </div>
-
+                    {% if post.category %}
+                    <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-3 shadow-sm mb-2">
+                        <i class="bi bi-tag-fill me-1"></i>{{ post.category }}
+                    </span>
+                    {% endif %}
                     <div class="d-flex align-items-center flex-wrap gap-2">
                         <h5 class="card-title fw-bold mb-0">店名：</h5>
                         <span class="badge bg-light text-dark border py-2 px-3">{{ post.shop_name }}</span>

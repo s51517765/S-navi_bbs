@@ -4,7 +4,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Profile
 from django.core.exceptions import ValidationError
-from .models import Comment
+from .models import Comment, Post
+import os
 
 
 def validate_nickname(value, is_staff):
@@ -91,6 +92,39 @@ class ProfileForm(forms.ModelForm):
         # 共通関数を呼び出す（修正漏れを防げる！）
         validate_nickname(first_name, self.instance.is_staff)
         return first_name
+
+
+class PostForm(forms.ModelForm):
+    # プルダウンとして定義
+    category = forms.ChoiceField(
+        choices=[],
+        label="カテゴリ",
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
+    class Meta:
+        model = Post
+        fields = [
+            "visit_date",
+            "category",
+            "shop_name",
+            "shop_url",
+            "cast_name",
+            "cast_url",
+            "content",
+            "stars",
+            "want_repeat",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 環境変数から取得
+        env_categories = os.getenv("POST_CATEGORIES", ",牛丼,カレー,カフェ,雑貨,その他")
+        category_list = [
+            (cat.strip(), cat.strip()) for cat in env_categories.split(",")
+        ]
+        self.fields["category"].choices = category_list
 
 
 # コメント

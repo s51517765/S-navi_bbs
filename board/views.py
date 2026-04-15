@@ -1,7 +1,8 @@
 # board/views.py
 
-from .forms import CustomUserCreationForm, ProfileForm, CommentForm
+from .forms import CustomUserCreationForm, ProfileForm, CommentForm, PostForm
 from .models import Post, Profile, Evaluation, Comment, CommentReaction, PostReaction
+from django import forms
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.mail import send_mail as django_send_mail
@@ -101,17 +102,8 @@ class PostListView(LoginRequiredMixin, ListView):
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     template_name = "board/post_form.html"
-    fields = [
-        "visit_date",
-        "shop_name",
-        "shop_url",
-        "cast_name",
-        "cast_url",
-        "content",
-        "stars",
-        "want_repeat",
-    ]
     success_url = reverse_lazy("index")
+    form_class = PostForm
 
     def post(self, request, *args, **kwargs):
         # 送られてきたデータをコピーする

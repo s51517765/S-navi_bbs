@@ -1,4 +1,5 @@
 # board/models.py #root直下にもmodels.pyはあるが使っていない
+from django import forms
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -46,8 +47,8 @@ class Post(models.Model):
         "キャスト名", max_length=100, blank=True, null=True, default=""
     )
     cast_url = models.URLField("キャストURL", blank=True, null=True, default="")
-
     content = models.TextField("感想", blank=False, default="")
+    category = models.CharField("カテゴリ", blank=False, max_length=50, default="")
 
     # 数値や真偽値もデフォルトを設定
     stars = models.IntegerField(
