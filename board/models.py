@@ -49,6 +49,7 @@ class Post(models.Model):
     cast_url = models.URLField("キャストURL", blank=True, null=True, default="")
     content = models.TextField("感想", blank=False, default="")
     category = models.CharField("カテゴリ", blank=False, max_length=50, default="")
+    region = models.CharField("地域", blank=False, max_length=50, default="")
 
     # 数値や真偽値もデフォルトを設定
     stars = models.IntegerField(

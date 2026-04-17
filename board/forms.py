@@ -103,11 +103,19 @@ class PostForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-control"}),
     )
 
+    region = forms.ChoiceField(
+        choices=[],
+        label="地域",
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
     class Meta:
         model = Post
         fields = [
             "visit_date",
             "category",
+            "region",
             "shop_name",
             "shop_url",
             "cast_name",
@@ -125,6 +133,10 @@ class PostForm(forms.ModelForm):
             (cat.strip(), cat.strip()) for cat in env_categories.split(",")
         ]
         self.fields["category"].choices = category_list
+
+        env_region = os.getenv("REGION_LIST", ",東京,神奈川,埼玉,千葉")
+        region_list = [(cat.strip(), cat.strip()) for cat in env_region.split(",")]
+        self.fields["region"].choices = region_list
 
 
 # コメント
