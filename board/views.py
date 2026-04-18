@@ -409,13 +409,12 @@ def reduce_points_on_login(sender, request, user, **kwargs):
 
 @login_required
 def profile_edit(request):
-    # プロフィールモデルではなく、ログインユーザー自身を編集対象にする
+    # ユーザーモデル
     user = request.user
-    profile = request.user.profile
 
     if request.method == "POST":
         # instance=user とすることで、今のユーザー情報を上書き保存します
-        form = ProfileForm(request.POST, instance=profile)
+        form = ProfileForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
             return redirect("index")

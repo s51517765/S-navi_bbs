@@ -59,8 +59,8 @@ class CustomUserCreationForm(UserCreationForm):
         nickname = self.cleaned_data.get("nickname")
 
         # 共通バリデーション関数を呼び出す
-        # 新規登録時は self.instance.is_staff は常に False なのでそのまま渡してOK
-        validate_nickname(nickname, self.instance.is_staff)
+        # 新規登録時は self.instance.user.is_staff は常に False なのでそのまま渡してOK
+        validate_nickname(nickname, self.instance.user.is_staff)
 
         return nickname
 
@@ -76,7 +76,10 @@ class CustomUserCreationForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ["first_name"]  # ニックネームとして使っている項目
+        fields = ["first_name"]
+        labels = {
+            "first_name": "ニックネーム",
+        }
         widgets = {
             "first_name": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "ニックネームを入力"}
