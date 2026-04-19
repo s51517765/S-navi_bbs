@@ -59,8 +59,8 @@ class CustomUserCreationForm(UserCreationForm):
         nickname = self.cleaned_data.get("nickname")
 
         # 共通バリデーション関数を呼び出す
-        # 新規登録時は self.instance.user.is_staff は常に False なのでそのまま渡してOK
-        validate_nickname(nickname, self.instance.user.is_staff)
+        # 新規登録時は self.instance.is_staff は常に False なのでそのまま渡してOK
+        validate_nickname(nickname, self.instance.is_staff)
 
         return nickname
 

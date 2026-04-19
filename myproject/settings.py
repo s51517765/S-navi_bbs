@@ -20,9 +20,8 @@ EMAIL_ALLOW_UNICODE = True
 # 先に BASE_DIR を定義する
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# XXX.env を明示的に読み込む
-# env_path = os.path.join("/etc/opt/myproject/", "stg.env")
-# load_dotenv(dotenv_path=env_path)
+# XXX.envを読み込む
+load_dotenv()
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")  # これが /home/***/prod/static に相当
@@ -32,8 +31,12 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG") == "True"
 SERVER_IP = os.getenv("SERVER_IP")
 DOMEIN = os.getenv("DOMEIN")
-CSRF_TRUSTED_ORIGINS = [os.getenv("CSRF_TRUSTED_ORIGINS", "http://127.0.0.1:8001")]
-
+csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+if csrf_origins:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(",")]
+else:
+    print(f"--- DEBUG: CSRF_TRUSTED_ORIGINS ENV READ ERROR ---")
+print(f"--- DEBUG: CSRF_TRUSTED_ORIGINS is {CSRF_TRUSTED_ORIGINS} ---")
 print(f"--- DEBUG: DOMEIN is [{DOMEIN}] ---")
 
 ALLOWED_HOSTS = [
