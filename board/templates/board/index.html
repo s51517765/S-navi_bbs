@@ -120,13 +120,10 @@
                 <br>
                 <!-- 投稿者情報 -->
                 <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
-                    <div>
                         <strong class="text-info">{{ post.author.first_name|default:post.author.username }}</strong>
                         <span class="mx-1">Hashed ID: {{ post.author.username|hash_id }}</span>
-                        <span class="ms-2">{{ post.created_at|date:"Y/m/d H:i" }}</span>
-                    </div>
+                        <span class="mx-1 text-muted ms-auto"> No. {{ post.id }} {{ post.created_at}}</span>
                 </div>
-
                 <hr class="text-muted opacity-25">
                 <!-- コメントがある場合のみ「コメントを表示」を表示 -->
                 {% if post.comments.count > 0 %}
@@ -157,9 +154,10 @@
                             <!-- forloop.counter を使って'd-none' (非表示) クラスをつける -->
                             <div
                                 class="bg-white p-2 rounded mb-2 small shadow-sm post-comment {% if forloop.counter > 0 %}d-none extra-comment-{{ post.id }}{% endif %}">
-                                <div class="d-flex justify-content-between border-bottom mb-1 pb-1">
+                                <div class="d-flex border-bottom mb-1 pb-1">
                                     <strong class="text-info">{{ comment.author.first_name }}</strong>
-                                    <span class="text-muted" style="font-size: 0.7rem;">{{ comment.created_at }}</span>
+                                    <span class="mx-1 text-muted">Hashed ID: {{ post.author.username|hash_id }}</span>
+                                    <span class="mx-1 text-muted ms-auto"> No. {{ post.id }}-{{comment.id}} {{ comment.created_at }}</span>                                    
                                 </div>
                                 <div class="text-dark mb-1">{{ comment.content }}</div>
                                 <div class="mt-1 d-flex gap-2" style="font-size: 0.7rem;">
