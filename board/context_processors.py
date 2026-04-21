@@ -1,5 +1,6 @@
 # board/context_processors.py
 from django.conf import settings
+from .models import SiteConfig
 import os
 
 
@@ -27,11 +28,5 @@ def support_widget(request):
     }
 
 
-"""
-def inquiry_widget(request):
-    return {
-        "INQUIRY_LINK_SCRIPT": os.getenv(
-            "INQUIRY_LINK", "<問い合わせフォームスクリプト>"
-        )
-    }
-"""
+def site_config(request):
+    return {"site_config": SiteConfig.get_config()}

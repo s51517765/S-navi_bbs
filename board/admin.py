@@ -1,6 +1,7 @@
 # board/admin.py
 from django.contrib import admin
 from .models import Post, Profile
+from .models import SiteConfig
 
 
 # admin管理画面
@@ -17,3 +18,14 @@ class PostAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Profile)
+
+
+@admin.register(SiteConfig)
+class SiteConfigAdmin(admin.ModelAdmin):
+    # 新しくレコードを追加できないようにする（1つあれば十分なので）
+    def has_add_permission(self, request):
+        return not SiteConfig.objects.exists()
+
+    # 削除もできないようにする
+    def has_delete_permission(self, request, obj=None):
+        return False

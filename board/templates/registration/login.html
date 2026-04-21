@@ -9,16 +9,30 @@
                 <form method="post">
                     {% csrf_token %}
                     {{ form.as_p }}
+                    {% if not site_config.login_locked or user.is_staff %}
                     <button type="submit" class="btn btn-primary w-100">ログイン</button>
+                    {% else %}
+                    <button type="submit" class="btn btn-secondary w-100">現在メンテナンス中です</button>
+                    {% endif %}      
                 </form>
                 <hr>
                 <div class="text-center mt-3">
+                    {% if site_config.login_locked %}
+                    <!-- メンテナンス中、ログイン停止、新規登録停止 -->
+                    {% elif site_config.signup_locked %}
+                    <a href="{% url 'login' %}" text-secondary>現在新規会員登録は停止中です</a>
+                    {% else %}
                     <a href="{% url 'signup' %}">新規会員登録はこちら</a>
+                    {% endif %}
                 </div>
 
                 <p>
                 <div class="text-center mt-3">
+                    {% if site_config.login_locked %}
+                    <!-- メンテナンス中、ログイン停止、新規登録停止 -->
+                    {% else%}
                     <a href="{% url 'password_reset' %}">パスワードを忘れた方はこちら</a>
+                    {% endif %}
                 </div>
                 </p>
             </div>

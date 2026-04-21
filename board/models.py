@@ -10,6 +10,49 @@ from django.utils import timezone
 import os
 
 
+class SiteConfig(models.Model):
+    signup_locked = models.BooleanField(
+        default=False, verbose_name="新規登録をロックする"
+    )
+    login_locked = models.BooleanField(
+        # パスワードリセット含む
+        default=False,
+        verbose_name="ログインをロックする（管理者以外）",
+    )
+
+    class Meta:
+        verbose_name = "システム設定"
+        verbose_name_plural = "システム設定"
+
+    def __str__(self):
+        return "システム設定"
+
+    signup_locked = models.BooleanField(
+        default=False, verbose_name="新規登録をロックする"
+    )
+    maintenance_message = models.TextField(
+        blank=True, verbose_name="メンテナンス中メッセージ"
+    )
+
+    class Meta:
+        verbose_name = "システム設定"
+        verbose_name_plural = "システム設定"
+
+    def __str__(self):
+        return "システム設定"
+
+    def save(self, *args, **kwargs):
+        # 常にID=1のレコードを更新するようにし、データが1つしか存在しないようにする
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_config(cls):
+        # 設定を取得する便利メソッド
+        config, created = cls.objects.get_or_create(pk=1)
+        return config
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     points = models.IntegerField(default=10)  # 初期ポイント

@@ -1,7 +1,15 @@
 # board/views.py
 
 from .forms import CustomUserCreationForm, ProfileForm, CommentForm, PostForm
-from .models import Post, Profile, Evaluation, Comment, CommentReaction, PostReaction
+from .models import (
+    Post,
+    Profile,
+    Evaluation,
+    Comment,
+    CommentReaction,
+    PostReaction,
+    SiteConfig,
+)
 from django import forms
 from django.conf import settings
 from django.core.mail import send_mail
@@ -9,7 +17,7 @@ from django.core.mail import send_mail as django_send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.contrib.messages.views import SuccessMessageMixin
@@ -150,7 +158,23 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
+@receiver(user_logged_in)
+def check_login_lock(sender, request, user, **kwargs):
+    config = SiteConfig.get_config()
+
+    # ロック中 かつ ユーザーが管理者(is_staff)でない場合
+    if config.login_locked and not user.is_staff:
+        logout(request)
+
+
 class SignUpView(CreateView):
+    def dispatch(self, request, *args, **kwargs):
+        config = SiteConfig.get_config()
+        # ログインロック（メンテナンス）時はサインアップも停止
+        if config.signup_locked or config.login_locked:
+            return redirect("index")
+        return super().dispatch(request, *args, **kwargs)
+
     form_class = CustomUserCreationForm
     template_name = "registration/signup.html"
     success_url = reverse_lazy("login")
@@ -253,6 +277,9 @@ class CustomPasswordResetView(PasswordResetView):
 
     def dispatch(self, *args, **kwargs):
         print("\n!!! DEBUG: CustomPasswordResetView CALLED !!!\n")
+        config = SiteConfig.get_config()
+        if config.login_locked:
+            return redirect("index")
         return super().dispatch(*args, **kwargs)
 
 

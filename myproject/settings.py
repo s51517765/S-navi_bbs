@@ -86,6 +86,7 @@ TEMPLATES = [
                 "board.context_processors.const_settings",
                 "board.context_processors.environment_info",
                 "board.context_processors.support_widget",
+                "board.context_processors.site_config",
             ],
         },
     },
