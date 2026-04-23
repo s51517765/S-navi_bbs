@@ -54,8 +54,9 @@ class SiteConfig(models.Model):
 
 
 class Profile(models.Model):
+    INITIAL_POINT = int(os.getenv("INITIAL_POINT", 1))
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    points = models.IntegerField(default=10)  # 初期ポイント
+    points = models.IntegerField(default=INITIAL_POINT)  # 初期ポイント
     last_point_update = models.DateField(default=timezone.now)  # 最後に減点した日
 
     def __str__(self):
@@ -261,3 +262,19 @@ def refund_user_points(sender, instance, **kwargs):
         profile.points += BAD_REWARD
 
     profile.save()
+
+
+# ログイン前ページ　インフォメーション掲示
+class Information(models.Model):
+    title = models.CharField("タイトル", max_length=200)
+    content = models.TextField("内容")
+    created_at = models.DateTimeField("公開日", default=timezone.now)
+    is_active = models.BooleanField("表示フラグ", default=True)
+
+    class Meta:
+        verbose_name = "お知らせ"
+        verbose_name_plural = "お知らせ"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title

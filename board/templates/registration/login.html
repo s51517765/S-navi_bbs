@@ -39,4 +39,47 @@
         </div>
     </div>
 </div>
+<div class="row justify-content-center mt-5" >
+    <div class="col-md-7 col-lg-6">
+        <div class="card shadow">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 8px; background-color: #ffffff;">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                        style="width: 48px; height: 48px; background-color: #eef2ff;">
+                        <i class="bi bi-bell-fill" style="color: #4f46e5; font-size: 1.2rem;"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h5 class="mb-0" style="font-weight: 700; color: #1e293b;">お知らせ</h5>
+                    </div>
+                </div>
+
+                <div class="list-group list-group-flush border-0">
+                    {% for info in informations %}
+                    <div class="card border-0 mb-2" style="border-radius: 8px; background-color: #f8faff;">
+                        <div class="card-body py-2">
+                            <div class="d-flex align-items-start">
+                                <div class="ms-3 flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <h6 class="mb-0" style="font-weight: 700; color: #334155;">{{ info.title }}</h6>
+                                        <div class="d-flex align-items-center">
+                                            <small class="text-muted me-2">{{ info.created_at }}</small>
+                                        </div>
+                                    </div>
+                                    <p class="mb-0 text-secondary" style="font-size: 0.9rem; line-height: 1.5;">
+                                        {{ info.content|linebreaksbr }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-3 text-muted">
+                        <p class="mb-0 small">現在お知らせはありません</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

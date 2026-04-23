@@ -9,6 +9,7 @@ from .models import (
     CommentReaction,
     PostReaction,
     SiteConfig,
+    Information,
 )
 from django import forms
 from django.conf import settings
@@ -25,7 +26,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import PasswordResetView
+from django.contrib.auth.views import PasswordResetView, LoginView
 from django.urls import reverse_lazy
 from django.views.generic import (
     ListView,
@@ -582,3 +583,16 @@ def post_detail(request, pk):
             "comment_form": comment_form,
         },
     )
+
+
+# ログイン前ページ　インフォメーション掲示
+class CustomLoginView(LoginView):
+    template_name = "registration/login.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        infos = Information.objects.filter(is_active=True)
+        print(f"--- DEBUG: infos count is {infos.count()} ---")
+        # ここでデータを取得して context に入れる
+        context["informations"] = Information.objects.filter(is_active=True)
+        return context

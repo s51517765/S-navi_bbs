@@ -2,6 +2,8 @@
 from django.contrib import admin
 from .models import Post, Profile
 from .models import SiteConfig
+from django.contrib import admin
+from .models import Information
 
 
 # admin管理画面
@@ -29,3 +31,11 @@ class SiteConfigAdmin(admin.ModelAdmin):
     # 削除もできないようにする
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+# ログイン前ページ　インフォメーション掲示
+@admin.register(Information)
+class InformationAdmin(admin.ModelAdmin):
+    list_display = ("title", "created_at", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("title", "content")
