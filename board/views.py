@@ -14,6 +14,7 @@ from django import forms
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.mail import send_mail as django_send_mail
+from django.core.paginator import Paginator
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site

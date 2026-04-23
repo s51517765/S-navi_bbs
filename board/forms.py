@@ -175,7 +175,7 @@ class PostForm(forms.ModelForm):
 
         self.sub_region_dict = SUB_REGION_DICT
         # 確認用
-        print(f"--- DEBUG: SUB_REGION_DICT is {SUB_REGION_DICT} ---")
+        # print(f"--- DEBUG: SUB_REGION_DICT is {SUB_REGION_DICT} ---")
 
         if self.is_bound:
             selected_sub = self.data.get("sub_region")
