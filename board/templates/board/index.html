@@ -47,7 +47,11 @@
                         <i class="bi bi-tag-fill me-1"></i>{{ post.category }}
                     </span>
                     {% endif %}
-                    {% if post.region %}
+                    {% if post.sub_region and post.region%}
+                    <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3 shadow-sm mb-2" style="font-size: 0.8rem;">
+                        <i class="bi bi-geo-alt-fill me-1"></i>{{ post.region }} > {{ post.sub_region }}
+                    </span>
+                    {% elif post.region %}
                     <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3 shadow-sm mb-2" style="font-size: 0.8rem;">
                         <i class="bi bi-geo-alt-fill me-1"></i>{{ post.region }}
                     </span>

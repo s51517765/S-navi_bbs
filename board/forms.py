@@ -108,9 +108,23 @@ class PostForm(forms.ModelForm):
 
     region = forms.ChoiceField(
         choices=[],
-        label="地域",
+        label="都道府県",
         required=True,
-        widget=forms.Select(attrs={"class": "form-control"}),
+        widget=forms.Select(attrs={"class": "form-control", "id": "id_region"}),
+    )
+
+    # サブ地域フィールドを追加
+    sub_region = forms.ChoiceField(
+        choices=[("", "選択の必要はありません")],
+        label="地域",
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "form-control",
+                "id": "id_sub_region",
+                "disabled": "disabled",
+            }
+        ),
     )
 
     class Meta:
@@ -119,6 +133,7 @@ class PostForm(forms.ModelForm):
             "visit_date",
             "category",
             "region",
+            "sub_region",
             "shop_name",
             "shop_url",
             "cast_name",
@@ -127,6 +142,11 @@ class PostForm(forms.ModelForm):
             "stars",
             "want_repeat",
         ]
+
+    def clean_sub_region(self):
+        # 選択肢のバリデーションをスキップし、送信された値をそのまま受け取る
+        sub_region = self.cleaned_data.get("sub_region")
+        return sub_region
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -140,6 +160,27 @@ class PostForm(forms.ModelForm):
         env_region = os.getenv("REGION_LIST", ",東京,神奈川,埼玉,千葉")
         region_list = [(cat.strip(), cat.strip()) for cat in env_region.split(",")]
         self.fields["region"].choices = region_list
+
+        SUB_REGION_RAW = os.getenv("SUB_REGION", "")
+        SUB_REGION_DICT = {}
+
+        if SUB_REGION_RAW:
+            # "/" で分割（集合 { } は使いません！）
+            for group in SUB_REGION_RAW.split("/"):
+                # "," で分割し、前後の空白・改行を除去
+                items = [i.strip() for i in group.split(",") if i.strip()]
+                if len(items) > 1:
+                    # 1つ目を「キー」、2つ目以降を「リスト」として格納
+                    SUB_REGION_DICT[items[0]] = items[1:]
+
+        self.sub_region_dict = SUB_REGION_DICT
+        # 確認用
+        print(f"--- DEBUG: SUB_REGION_DICT is {SUB_REGION_DICT} ---")
+
+        if self.is_bound:
+            selected_sub = self.data.get("sub_region")
+            if selected_sub:
+                self.fields["sub_region"].choices = [(selected_sub, selected_sub)]
 
 
 # コメント

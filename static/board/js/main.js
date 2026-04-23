@@ -242,21 +242,19 @@ window.addEventListener('resize', () => {
     }
 });
 
+
 document.addEventListener('DOMContentLoaded', function() {
-    // データの取得
+    // 1. データの取得
     const scriptElement = document.getElementById('sub-region-data');
     if (!scriptElement) {
         console.warn("sub-region-data element not found.");
         return;
     }
 
-    subRegionData = JSON.parse(scriptElement.textContent);
-    // もし中身がまだ文字列なら、もう一度パースする
-    if (typeof subRegionData === 'string') {
-        subRegionData = JSON.parse(subRegionData);
-    }
+    const subRegionData = JSON.parse(scriptElement.textContent);
+    console.log("Sub Region Data loaded:", subRegionData);
 
-    // 要素の取得（必ずこの関数内で定義する）
+    // 2. 要素の取得（必ずこの関数内で定義する）
     const regionSelect = document.getElementById('id_region');
     const subRegionSelect = document.getElementById('id_sub_region');
 
@@ -270,15 +268,13 @@ document.addEventListener('DOMContentLoaded', function() {
     regionSelect.addEventListener('change', function() {
         const selectedValue = this.value.trim();
         console.log("Selected Region:", selectedValue);
-        console.log("Sub Region Data loaded:", subRegionData);
+        
         subRegionSelect.innerHTML = '<option value="">選択の必要はありません</option>';
         subRegionSelect.disabled = true;
 
-        console.log("Data Keys:", Object.keys(subRegionData));
-        // キーの一つを取り出して長さを比較
-        const firstKey = Object.keys(subRegionData)[0];
-
+        // Python側で正しく辞書が作られていれば、これで動きます
         if (selectedValue && subRegionData[selectedValue]) {
+            console.log("Match found!");
             const list = subRegionData[selectedValue];
             
             subRegionSelect.innerHTML = '<option value="">選択してください</option>';

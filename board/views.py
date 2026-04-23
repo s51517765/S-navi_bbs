@@ -43,6 +43,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
+import json
 import os
 
 
@@ -154,6 +155,10 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         # .env からメッセージを取得。設定がない場合のデフォルトも指定できます。
         context["post_note"] = os.getenv(
             "POST_NOTE_MESSAGE", "感想は具体的に記入してください。"
+        )
+        form = self.get_form()
+        context["sub_region_json"] = json.dumps(
+            form.sub_region_dict, ensure_ascii=False
         )
         return context
 
