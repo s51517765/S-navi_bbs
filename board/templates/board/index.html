@@ -23,7 +23,7 @@
         </div>
         {% else %}
         <!-- 投稿一覧ループ -->
-        {% for post in posts %}
+        {% for post in page_obj %}
         <div class="card mb-4 shadow-sm border-primary-subtle">
             <div class="card-body p-4">
                 <!-- ヘッダー部分：訪問日、店名、星評価 -->
@@ -196,6 +196,21 @@
         {% empty %}
         <div class="text-center py-5 text-muted">まだ投稿がありません。</div>
         {% endfor %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">&laquo; 最初</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">前へ</a></li>
+                {% endif %}
+
+                <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">次へ</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">最後 &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
         {% endif %}
     </div>
 </div>

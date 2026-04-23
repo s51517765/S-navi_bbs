@@ -106,6 +106,22 @@ class PostListView(LoginRequiredMixin, ListView):
         context["comment_form"] = CommentForm()
         return context
 
+    def get_paginate_by(self, queryset):
+        # 環境変数から取得し、失敗したらデフォルト10件にする
+        return int(os.getenv("PAGE_PER_POSTS", 10))
+
+    def post_list(request):
+        post_list = Post.objects.all().order_by("-created_at")
+
+        # 環境変数から取得
+        per_page = int(os.getenv("PAGE_PER_POSTS", 10))
+
+        paginator = Paginator(post_list, per_page)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+
+        return render(request, "board/post_list.html", {"page_obj": page_obj})
+
 
 # 新規投稿（こちらは既にログイン済みのはず）
 class PostCreateView(LoginRequiredMixin, CreateView):
