@@ -336,6 +336,9 @@ class Guide(TemplateView):
     def get_context_data(self, **kwargs):
         # テンプレートに渡す追加データがあればここに記述
         context = super().get_context_data(**kwargs)
+        if self.request.user.is_authenticated:
+            profile, _ = Profile.objects.get_or_create(user=self.request.user)
+            context["user_points"] = profile.points
         # 例: ページタイトルなどを動的に渡す場合
         context["page_title"] = "ご利用ガイド"
         return context
