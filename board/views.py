@@ -160,6 +160,9 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         # ポイント加算
         POST_REWARD = os.getenv("POST_REWARD")
         profile = self.request.user.profile
+        #  マイナスだったときは投稿でリセット
+        if profile.points < 0:
+            profile.points = 0
         profile.points += int(POST_REWARD)
         profile.save()
 
