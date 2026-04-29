@@ -1,6 +1,12 @@
 # board/views.py
 
-from .forms import CustomUserCreationForm, ProfileForm, CommentForm, PostForm
+from .forms import (
+    CustomUserCreationForm,
+    ProfileForm,
+    CommentForm,
+    PostForm,
+    CustomAuthenticationForm,
+)
 from .models import (
     Post,
     Profile,
@@ -20,7 +26,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth import login, logout
-from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
@@ -591,6 +597,7 @@ def post_detail(request, pk):
 # ログイン前ページ　インフォメーション掲示
 class CustomLoginView(LoginView):
     template_name = "registration/login.html"
+    authentication_form = CustomAuthenticationForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

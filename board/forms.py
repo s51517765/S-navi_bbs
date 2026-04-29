@@ -1,6 +1,6 @@
 # board/forms.py
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from .models import Profile
 from django.core.exceptions import ValidationError
@@ -200,3 +200,12 @@ class CommentForm(forms.ModelForm):
         labels = {
             "content": "コメント",
         }
+
+
+class CustomAuthenticationForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ラベルを「ユーザーID」に変更
+        self.fields["username"].label = "ユーザーID"
+        # プレースホルダーも変えるなら
+        self.fields["username"].widget.attrs.update({"placeholder": "ユーザーIDを入力"})
