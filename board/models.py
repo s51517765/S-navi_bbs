@@ -57,7 +57,7 @@ class Profile(models.Model):
     INITIAL_POINT = int(os.getenv("INITIAL_POINT", 1))
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     points = models.IntegerField(default=INITIAL_POINT)  # 初期ポイント
-    last_point_update = models.DateField(default=timezone.now)  # 最後に減点した日
+    last_point_update = models.DateTimeField(default=timezone.now)  # 最後に減点した日時
 
     def __str__(self):
         return f"{self.user.username} - {self.points}pt"

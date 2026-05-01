@@ -1,3 +1,4 @@
+console.log("Main.js Loaded");
 function submitComment(event, postId) {
     event.preventDefault();
 
@@ -242,45 +243,28 @@ window.addEventListener('resize', () => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-    // データの取得
+// 地域選択フォームの制御
+function initRegionSelect() {
     const scriptElement = document.getElementById('sub-region-data');
-    if (!scriptElement) {
-        console.warn("sub-region-data element not found.");
-        return;
-    }
+    if (!scriptElement) return;
 
-    subRegionData = JSON.parse(scriptElement.textContent);
-    // もし中身がまだ文字列なら、もう一度パースする
+    let subRegionData = JSON.parse(scriptElement.textContent);
     if (typeof subRegionData === 'string') {
         subRegionData = JSON.parse(subRegionData);
     }
 
-    // 要素の取得（必ずこの関数内で定義する）
     const regionSelect = document.getElementById('id_region');
     const subRegionSelect = document.getElementById('id_sub_region');
 
-    // 要素が存在しない場合は処理を中断
-    if (!regionSelect || !subRegionSelect) {
-        console.warn("Form elements not found.");
-        return;
-    }
+    if (!regionSelect || !subRegionSelect) return;
 
-    // 3. イベントリスナーの設定
     regionSelect.addEventListener('change', function() {
         const selectedValue = this.value.trim();
-        console.log("Selected Region:", selectedValue);
-        console.log("Sub Region Data loaded:", subRegionData);
         subRegionSelect.innerHTML = '<option value="">選択の必要はありません</option>';
         subRegionSelect.disabled = true;
 
-        console.log("Data Keys:", Object.keys(subRegionData));
-        // キーの一つを取り出して長さを比較
-        const firstKey = Object.keys(subRegionData)[0];
-
         if (selectedValue && subRegionData[selectedValue]) {
             const list = subRegionData[selectedValue];
-            
             subRegionSelect.innerHTML = '<option value="">選択してください</option>';
             list.forEach(item => {
                 const opt = document.createElement('option');
@@ -291,4 +275,55 @@ document.addEventListener('DOMContentLoaded', function() {
             subRegionSelect.disabled = false;
         }
     });
+}
+
+// ログイン通知トーストの表示
+function displayLoginNotification() {
+    let dataElement = document.getElementById('notification-data');
+    if (!dataElement) return;
+
+    try {
+        const data = JSON.parse(dataElement.textContent);
+        const contentDiv = document.getElementById('notification-content');
+        const toastCard = document.querySelector('#welcome-toast .card');
+
+        if (!contentDiv || !toastCard) return;
+
+        const interactionCount = data.interactions || data.new_interactions || 0;
+        const postCount = data.posts || data.new_posts || 0;
+
+        if (interactionCount > 0 || postCount > 0) {
+            console.log("displayLoginNotification5");
+
+            let html = '';
+            if (interactionCount > 0) {
+                html += `<p class="mb-1"><i class="bi bi-heart-fill text-danger me-1"></i> 投稿に <strong>${interactionCount}件</strong> の反応があります</p>`;
+            }
+            if (postCount > 0) {
+                html += `<p class="mb-0"><i class="bi bi-chat-left-dots-fill text-primary me-1"></i> 新着投稿が <strong>${postCount}件</strong> あります</p>`;
+            }
+            contentDiv.innerHTML = html;
+            
+            setTimeout(() => {
+                toastCard.style.opacity = '1';
+                toastCard.style.transform = 'translateY(0)';
+            }, 300);
+            
+            // 8秒後に自動で消す設定（オプション）
+            setTimeout(() => {
+                toastCard.style.opacity = '0';
+                toastCard.style.transform = 'translateY(100px)';
+            }, 8000);
+        }
+    } catch (e) {
+        console.error("Failed to parse notification JSON:", e);
+    }
+}
+
+// 実行トリガー
+// ページが読み込まれたら各機能を個別に実行する
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("addEventListener");
+    displayLoginNotification();
+    initRegionSelect();
 });

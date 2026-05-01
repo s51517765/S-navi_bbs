@@ -215,9 +215,29 @@
         {% endif %}
     </div>
 </div>
+{% for message in messages %}
+    {% if "notification" in message.tags %}
+        <script id="notification-data" type="application/json">{{ message|safe }}</script>
+        <div id="welcome-toast" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+            <div class="card shadow-lg border-0" style="border-radius: 16px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); min-width: 280px; transform: translateY(100px); opacity: 0; transition: all 0.6s ease-out;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                            <i class="bi bi-stars text-primary"></i>
+                        </div>
+                        <h6 class="mb-0 fw-bold text-dark">おかえりなさい！</h6>
+                    </div>
+                    <div class="small text-secondary" id="notification-content">
+                        </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endfor %}
+
 
 <!-- メッセージを表示する土台 -->
 <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>
 
-<script src="{% static 'board/js/main.js' %}?v=20260425_1"></script>
+<script src="{% static 'board/js/main.js' %}?v=20260501_1"></script>
 {% endblock %}

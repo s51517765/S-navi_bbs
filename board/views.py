@@ -53,6 +53,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 import json
 import os
+import datetime
 
 
 # 一覧表示（ログイン必須）
@@ -440,32 +441,62 @@ def evaluate_post(request, post_id, eval_type):
 
 
 @receiver(user_logged_in)
-def reduce_points_on_login(sender, request, user, **kwargs):
+def act_on_login(sender, request, user, **kwargs):
     print(f"\n=== DEBUG START for {user.username} ===")
     profile, created = Profile.objects.get_or_create(user=user)
 
     # DBから取り出した直後の値を確認
-    raw_last_update = profile.last_point_update
-    print(f"1. DB内の最終更新日: {raw_last_update} (型: {type(raw_last_update)})")
-
+    last_update_time = profile.last_point_update
+    last_update_date = last_update_time.date()  # 丸める
+    print(f"1. DB内の最終更新日時: {last_update_time}")
     today = timezone.now().date()
     print(f"2. 計算に使用する今日の日付: {today}")
 
     # 計算式の内訳を確認
-    diff = today - raw_last_update
+    diff = today - last_update_date
     days_passed = diff.days
     print(f"3. 差分計算結果: {diff} -> days属性: {days_passed}")
 
+    profile.last_point_update = timezone.now()
     if days_passed >= 1:
         reduction = days_passed
         old_points = profile.points
         profile.points = max(0, profile.points - reduction)
-        profile.last_point_update = today
-        profile.save()
         print(f"4. 【更新実行】 {old_points} -> {profile.points} (減少量: {reduction})")
     else:
         print("4. 【更新スキップ】 1日以上経過していません")
 
+    profile.save()
+
+    print("Last_update_date: " + str(last_update_date))
+    new_posts = 0
+    new_interactions = 0
+
+    # 新着投稿数、アクション数取得
+    if last_update_time:
+        # 自分の投稿への新規コメント数
+        new_interactions = Comment.objects.filter(
+            post__author=user, created_at__gt=last_update_time
+        ).count()
+
+        # 自分以外の新着投稿数
+        new_posts = (
+            Post.objects.filter(created_at__gt=last_update_time)
+            .exclude(author=user)
+            .count()
+        )
+
+    # contextの代わりに、Djangoのmessages機能を使って次の画面へ渡します
+    # 画面に渡すメッセージをセット
+    if new_interactions > 0 or new_posts > 0:
+        notification_data = {
+            "interactions": new_interactions,  # キー名
+            "posts": new_posts,
+        }
+        messages.info(request, json.dumps(notification_data), extra_tags="notification")
+    # 合計通知数（いいね ＋ コメント）
+    print("notification_count: " + str(new_interactions))
+    print("new_post_count: " + str(new_posts))
     print("=== DEBUG END ===\n")
 
 
@@ -602,7 +633,7 @@ class CustomLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         infos = Information.objects.filter(is_active=True)
-        print(f"--- DEBUG: infos count is {infos.count()} ---")
+        # print(f"--- DEBUG: infos count is {infos.count()} ---")
         # ここでデータを取得して context に入れる
         context["informations"] = Information.objects.filter(is_active=True)
         return context

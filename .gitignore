@@ -21,7 +21,7 @@ share/
 # --- メディア・静的ファイル ---
 # ユーザーがアップロードした画像などは含めないのが一般的
 /media/
-/static/  # 開発用。デプロイ時は collectstatic で生成するため。
+static/board/*  # 開発用。デプロイ時は collectstatic で生成するため。
 
 # --- OS・エディタ関連 ---
 .DS_Store
