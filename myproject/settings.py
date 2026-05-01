@@ -148,6 +148,10 @@ LOGOUT_ON_GET = True
 
 APPEND_SLASH = True
 
+# セッションタイムアウト
+SESSION_COOKIE_AGE = 1800  # 秒
+SESSION_SAVE_EVERY_REQUEST = True
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
