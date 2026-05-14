@@ -6,8 +6,33 @@
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
                 <h2 class="fw-bold mb-4 text-center">新規投稿</h2>
-
-                <form method="post" novalidate onsubmit="return confirm('投稿してもよろしいですか？');">
+                {% if draft %}
+                <div id="draft-alert" class="alert alert-warning border-0 shadow-sm mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                        <div>
+                            <div id="region-metadata" 
+                                data-saved-sub-region="{{ saved_sub_region|default:'' }}">
+                            </div>
+                            <div class="fw-bold">作成中の下書きがあります</div>
+                            <div class="small text-muted mb-2">最終保存: {{ draft.updated_at|date:"Y/m/d H:i" }}</div>
+                            
+                            <button type="button" class="btn btn-sm btn-warning fw-bold me-2" onclick="keepDraft()">
+                                このまま編集する
+                            </button>
+                            <a href="?discard=true" class="btn btn-sm btn-outline-danger fw-bold" 
+                            onclick="return confirm('下書きを完全に削除します。よろしいですか？')">
+                                破棄して新しく書く
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div id="draft-data" 
+                    data-has-draft="true" 
+                    data-updated-at="{{ draft.updated_at|date:'Y/m/d H:i' }}">
+                </div>
+                {% endif %}
+                    <form method="post" id="post-form" novalidate onsubmit="return confirmSubmission(event);">
                     {% csrf_token %}
 
                     {% for field in form %}
@@ -45,7 +70,10 @@
                     {% endfor %}
 
                     <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary py-2 fw-bold shadow-sm">
+                        <button type="submit" name="save_draft" class="btn btn-secondary">
+                            下書きとして保存
+                        </button>
+                        <button type="submit" name="post" class="btn btn-primary py-2 fw-bold shadow-sm">
                             <i class="bi bi-check-circle"></i> 投稿する
                         </button>
                         <a href="{% url 'index' %}" class="btn btn-outline-secondary">
@@ -102,5 +130,5 @@
     }
 </style>
 {{ sub_region_json|json_script:"sub-region-data" }}
-<script src="{% static 'board/js/main.js' %}?v=20260501_1"></script>
+<script src="{% static 'board/js/main.js' %}?v=20260515_0"></script>
 {% endblock %}

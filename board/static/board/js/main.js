@@ -246,6 +246,7 @@ window.addEventListener('resize', () => {
 // 地域選択フォームの制御
 function initRegionSelect() {
     const scriptElement = document.getElementById('sub-region-data');
+    const metadataElement = document.getElementById('region-metadata');
     if (!scriptElement) return;
 
     let subRegionData = JSON.parse(scriptElement.textContent);
@@ -255,25 +256,41 @@ function initRegionSelect() {
 
     const regionSelect = document.getElementById('id_region');
     const subRegionSelect = document.getElementById('id_sub_region');
-
     if (!regionSelect || !subRegionSelect) return;
 
-    regionSelect.addEventListener('change', function() {
-        const selectedValue = this.value.trim();
+    const updateSubRegions = (selectedValue, targetValue = "") => {
         subRegionSelect.innerHTML = '<option value="">選択の必要はありません</option>';
         subRegionSelect.disabled = true;
 
         if (selectedValue && subRegionData[selectedValue]) {
             const list = subRegionData[selectedValue];
             subRegionSelect.innerHTML = '<option value="">選択してください</option>';
+            
             list.forEach(item => {
                 const opt = document.createElement('option');
                 opt.value = item;
                 opt.textContent = item;
+                // HTMLから受け取った保存済みの値と一致するかチェック
+                if (item === targetValue) {
+                    opt.selected = true;
+                }
                 subRegionSelect.appendChild(opt);
             });
             subRegionSelect.disabled = false;
         }
+    };
+
+    // --- 初期化処理 ---
+    if (regionSelect.value) {
+        // Djangoが送った保存済みの値を取得
+        const savedValue = metadataElement ? metadataElement.getAttribute('data-saved-sub-region') : "";
+        
+        updateSubRegions(regionSelect.value.trim(), savedValue);
+    }
+
+    // --- イベントリスナー ---
+    regionSelect.addEventListener('change', function() {
+        updateSubRegions(this.value.trim());
     });
 }
 
@@ -323,7 +340,30 @@ function displayLoginNotification() {
 // 実行トリガー
 // ページが読み込まれたら各機能を個別に実行する
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("addEventListener");
     displayLoginNotification();
     initRegionSelect();
+    const draftAlert = document.getElementById('draft-alert');
+    if (draftAlert) {
+        // ユーザーの視線を引くために少しふわっと出す、あるいはスクロールさせる
+        draftAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 });
+
+// 下書きをそのまま使う場合（アラートを閉じるだけ）
+function keepDraft() {
+    const alert = document.getElementById('draft-alert');
+    if (alert) {
+        alert.style.transition = 'opacity 0.3s ease';
+        alert.style.opacity = '0';
+        setTimeout(() => alert.style.display = 'none', 300);
+    }
+}
+
+// 投稿時の確認
+function confirmSubmission(event) {
+    const button = event.submitter;
+    if (button && button.name === 'post') {
+        return confirm('投稿してもよろしいですか？');
+    }
+    return true; // 下書き保存時は確認なし
+}

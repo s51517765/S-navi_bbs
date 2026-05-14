@@ -91,6 +91,8 @@ class Post(models.Model):
     category = models.CharField("カテゴリ", blank=False, max_length=50, default="")
     region = models.CharField("都道府県", blank=False, max_length=50, default="")
     sub_region = models.CharField("地域", max_length=50, blank=True, null=True)
+    is_draft = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # 数値や真偽値もデフォルトを設定
     stars = models.IntegerField(

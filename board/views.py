@@ -139,6 +139,16 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy("index")
     form_class = PostForm
 
+    # 下書きがあるかチェック
+    def get(self, request, *args, **kwargs):
+        # 破棄リクエストがある場合、物理削除
+        if request.GET.get("discard") == "true":
+            Post.objects.filter(author=request.user, is_draft=True).delete()
+            return redirect("post_create")  # クエリパラメータを消して再読み込み
+
+        self.draft = Post.objects.filter(author=request.user, is_draft=True).first()
+        return super().get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         # 送られてきたデータをコピーする
         data = request.POST.copy()
@@ -164,6 +174,15 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         # 投稿者をセット
         form.instance.author = self.request.user
 
+        # 下書きボタンが押されたとき
+        if "save_draft" in self.request.POST:
+            form.instance.is_draft = True
+            form.save()
+            messages.success(self.request, "下書きを保存しました")
+            return redirect("post_create")
+
+        # 公開処理（is_draftをFalseにする）
+        form.instance.is_draft = False
         # ポイント加算
         POST_REWARD = os.getenv("POST_REWARD")
         profile = self.request.user.profile
@@ -174,10 +193,16 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         profile.save()
 
         # これで全てのフィールド（URL含む）が保存される
+        messages.success(self.request, "投稿が完了しました！")
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        draft = Post.objects.filter(author=self.request.user, is_draft=True).first()
+        context["draft"] = draft
+        # 【追加】下書きに保存されている「地域」の値を文字列で渡す
+        context["saved_sub_region"] = draft.sub_region if draft else ""
+
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
         context["user_points"] = profile.points
         # .env からメッセージを取得。設定がない場合のデフォルトも指定できます。
@@ -190,6 +215,15 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         )
         return context
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # 下書きが存在する場合、そのインスタンスをフォームに紐付ける
+        read_draft = Post.objects.filter(
+            author=self.request.user, is_draft=True
+        ).first()
+        if read_draft:
+            kwargs.update({"instance": read_draft})
+        return kwargs
 
 @receiver(user_logged_in)
 def check_login_lock(sender, request, user, **kwargs):
