@@ -161,7 +161,7 @@
                                 class="bg-white p-2 rounded mb-2 small shadow-sm post-comment {% if forloop.counter > 0 %}d-none extra-comment-{{ post.id }}{% endif %}">
                                 <div class="d-flex border-bottom mb-1 pb-1">
                                     <strong class="text-info">{{ comment.author.first_name }}</strong>
-                                    <span class="mx-1 text-muted">Hashed ID: {{ post.author.username|hash_id }}</span>
+                                    <span class="mx-1 text-muted">Hashed ID: {{ comment.author.username|hash_id }}</span>
                                     <span class="mx-1 text-muted ms-auto"> No. {{ post.id }}-{{comment.id}} {{ comment.created_at }}</span>                                    
                                 </div>
                                 <div class="text-dark mb-1">{{ comment.content }}</div>
